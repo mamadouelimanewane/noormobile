@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { socket } from '../lib/api';
 import { useStore } from '../store/useStore';
 import toast from 'react-hot-toast';
+import { playNotificationSound } from '../lib/sound';
 import type { ServiceRequest, Offer } from '../types';
 
 export default function SocketManager() {
@@ -24,6 +25,7 @@ export default function SocketManager() {
         if (drivers[currentUser.id]?.isOnline) {
           useStore.setState(s => {
             if (!s.requests.find(r => r.id === req.id)) {
+              playNotificationSound();
               toast('Nouvelle demande à proximité !', { icon: '🚖' });
               return { requests: [req, ...s.requests] };
             }
@@ -39,6 +41,7 @@ export default function SocketManager() {
         if (reqIndex !== -1 && s.requests[reqIndex].passengerId === currentUser.id) {
           const req = s.requests[reqIndex];
           if (!req.offers.find(o => o.id === offer.id)) {
+            playNotificationSound();
             toast.success('Un chauffeur a fait une offre !');
             const newRequests = [...s.requests];
             newRequests[reqIndex] = { ...req, offers: [offer, ...req.offers] };
@@ -54,6 +57,7 @@ export default function SocketManager() {
         const reqIndex = s.requests.findIndex(r => r.id === request.id);
         if (reqIndex !== -1) {
           if (request.driverId === currentUser.id) {
+            playNotificationSound();
             toast.success('Course acceptée par le client !');
           }
           const newRequests = [...s.requests];
@@ -71,6 +75,7 @@ export default function SocketManager() {
         const reqIndex = s.requests.findIndex(r => r.id === request.id);
         if (reqIndex !== -1) {
           if (request.status === 'termine') {
+             playNotificationSound();
              toast('Course terminée !', { icon: '🏁' });
           }
           const newRequests = [...s.requests];
