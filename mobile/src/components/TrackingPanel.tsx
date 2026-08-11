@@ -13,6 +13,12 @@ const STATUS_LABEL: Record<string, string> = {
   termine: 'Trajet terminé',
 };
 
+const DELIVERY_STATUS_LABEL: Record<string, string> = {
+  attribue: 'Le livreur est en route',
+  en_cours: 'Colis en transit',
+  termine: 'Colis livré',
+};
+
 export default function TrackingPanel({ request, viewerRole }: { request: ServiceRequest; viewerRole: 'passager' | 'chauffeur' }) {
   const rateRequest = useStore((s) => s.rateRequest);
   const updateRideStatus = useStore((s) => s.updateRideStatus);
@@ -32,7 +38,11 @@ export default function TrackingPanel({ request, viewerRole }: { request: Servic
       >
         <div className="bg-white border rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="font-semibold">{STATUS_LABEL[request.status] ?? request.status}</span>
+            <span className="font-semibold">
+              {request.type === 'delivery'
+                ? DELIVERY_STATUS_LABEL[request.status] ?? request.status
+                : STATUS_LABEL[request.status] ?? request.status}
+            </span>
             <span className="font-bold text-noordrive-green">{formatFcfa(request.proposedPrice)}</span>
           </div>
           <div className="text-sm text-gray-500">
@@ -62,7 +72,7 @@ export default function TrackingPanel({ request, viewerRole }: { request: Servic
             onClick={() => updateRideStatus(request.id, 'en_cours')} 
             className="w-full bg-noordrive-black text-white font-bold py-3 rounded-xl"
           >
-            Client récupéré (Démarrer la course)
+            {request.type === 'delivery' ? 'Colis récupéré (En route)' : 'Client récupéré (Démarrer la course)'}
           </button>
         )}
 
@@ -73,10 +83,28 @@ export default function TrackingPanel({ request, viewerRole }: { request: Servic
                 cancelRequest(request.id);
               }
             }} 
-            className="w-full bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3 rounded-xl transition"
+            className="w-full bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3 rounded-xl transition border border-red-100"
           >
-            Annuler la course
+            {request.type === 'delivery' ? 'Annuler la livraison' : 'Annuler la course'}
           </button>
+        )}
+
+        {request.type === 'delivery' && request.packageInfo && (viewerRole === 'chauffeur' || viewerRole === 'passager') && (
+          <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-2">
+            <h4 className="font-bold text-blue-900">Détails de la Livraison</h4>
+            <p className="text-blue-800 text-sm">Destinataire : <span className="font-semibold">{request.packageInfo.destinataireNom}</span></p>
+            <div className="flex items-center justify-between">
+              <p className="text-blue-800 font-medium text-sm">{request.packageInfo.destinatairePhone}</p>
+              {viewerRole === 'chauffeur' && (
+                <a href={`tel:${request.packageInfo.destinatairePhone}`} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-full text-xs font-bold transition shadow-sm">
+                  Appeler
+                </a>
+              )}
+            </div>
+            <div className="mt-2 text-xs text-blue-600 border-t border-blue-200 pt-2 font-medium">
+              Colis {request.packageInfo.taille} : {request.packageInfo.description}
+            </div>
+          </div>
         )}
 
         {viewerRole === 'chauffeur' && request.status === 'en_cours' && (
@@ -84,7 +112,7 @@ export default function TrackingPanel({ request, viewerRole }: { request: Servic
             onClick={() => updateRideStatus(request.id, 'termine')} 
             className="w-full bg-noordrive-green text-white font-bold py-3 rounded-xl"
           >
-            Course terminée
+            {request.type === 'delivery' ? 'Colis livré (Terminer)' : 'Course terminée'}
           </button>
         )}
 

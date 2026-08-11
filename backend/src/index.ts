@@ -220,12 +220,43 @@ io.on('connection', (socket) => {
         dropoffLat: data.dropoff.lat,
         dropoffLng: data.dropoff.lng,
         dropoffLabel: data.dropoff.label,
-        status: 'recherche'
+        status: 'recherche',
+        packageDesc: data.packageInfo?.description,
+        packageSize: data.packageInfo?.taille,
+        destName: data.packageInfo?.destinataireNom,
+        destPhone: data.packageInfo?.destinatairePhone,
+        villeDepart: data.intercityInfo?.villeDepart,
+        villeArrivee: data.intercityInfo?.villeArrivee,
+        dateDepart: data.intercityInfo?.dateDepart,
+        places: data.intercityInfo?.places,
       }
     });
+    
+    let packageInfo = undefined;
+    if (req.packageDesc) {
+      packageInfo = {
+        description: req.packageDesc,
+        taille: req.packageSize,
+        destinataireNom: req.destName,
+        destinatairePhone: req.destPhone
+      };
+    }
+
+    let intercityInfo = undefined;
+    if (req.villeDepart) {
+      intercityInfo = {
+        villeDepart: req.villeDepart,
+        villeArrivee: req.villeArrivee,
+        dateDepart: req.dateDepart,
+        places: req.places
+      };
+    }
+
     const formattedReq = {
       ...req,
       offers: [],
+      packageInfo,
+      intercityInfo,
       createdAt: req.createdAt.getTime(),
       updatedAt: req.updatedAt.getTime()
     };
