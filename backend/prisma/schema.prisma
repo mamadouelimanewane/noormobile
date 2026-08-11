@@ -144,7 +144,6 @@ model ChatMessage {
 model PlatformSettings {
   id                   String @id @default("default")
   commissionRate       Float  @default(0.12)
-  taxRate              Float  @default(0.18)
   referralBonusSponsor Float  @default(1000)
   referralBonusReferee Float  @default(500)
   baseFare             Float  @default(1000)
@@ -160,5 +159,13 @@ model DriverDocument {
   type      String   // "ID_CARD", "DRIVING_LICENSE", "VEHICLE_REGISTRATION"
   url       String   // URL to the uploaded file
   status    String   @default("PENDING") // "PENDING", "APPROVED", "REJECTED"
+  createdAt DateTime @default(now())
+}
+
+model Tax {
+  id        String   @id @default(cuid())
+  name      String
+  rate      Float
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
-import { Settings, Users, LogOut, CheckCircle2, LayoutDashboard, CreditCard, Activity, TrendingUp } from 'lucide-react';
+import { Settings, Users, LogOut, CheckCircle2, LayoutDashboard, CreditCard, Activity, TrendingUp, Percent } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatFcfa } from '../lib/geo';
 
@@ -20,6 +20,10 @@ export default function AdminHome() {
   const [saved, setSaved] = useState(false);
   const [stats, setStats] = useState({ totalUsers: 0, totalRides: 0, totalRevenue: 0 });
   const [usersList, setUsersList] = useState<any[]>([]);
+  
+  const [taxes, setTaxes] = useState<any[]>([]);
+  const [newTaxName, setNewTaxName] = useState('');
+  const [newTaxRate, setNewTaxRate] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -39,10 +43,11 @@ export default function AdminHome() {
 
       api.get('/admin/stats').then(res => setStats(res.data)).catch(console.error);
       api.get('/admin/users').then(res => setUsersList(res.data)).catch(console.error);
+      api.get('/admin/taxes').then(res => setTaxes(res.data)).catch(console.error);
     });
   };
 
-  const handleSave = () => {
+  const handleSaveSettings = () => {
     import('../lib/api').then(({ api }) => {
       api.post('/admin/settings', {
         referralBonusSponsor: sponsorBonus,
@@ -51,6 +56,26 @@ export default function AdminHome() {
       }).then(() => {
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
+      }).catch(console.error);
+    });
+  };
+
+  const handleCreateTax = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTaxName || !newTaxRate) return;
+    import('../lib/api').then(({ api }) => {
+      api.post('/admin/taxes', { name: newTaxName, rate: Number(newTaxRate) }).then(() => {
+        setNewTaxName('');
+        setNewTaxRate('');
+        fetchData();
+      }).catch(console.error);
+    });
+  };
+
+  const toggleTaxStatus = (taxId: string, currentStatus: boolean) => {
+    import('../lib/api').then(({ api }) => {
+      api.put(`/admin/taxes/${taxId}`, { isActive: !currentStatus }).then(() => {
+        fetchData();
       }).catch(console.error);
     });
   };
@@ -76,6 +101,9 @@ export default function AdminHome() {
           </button>
           <button onClick={() => setTab('users')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'users' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
             <Users className="w-5 h-5" /> Utilisateurs
+          </button>
+          <button onClick={() => setTab('taxes')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'taxes' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
+            <Percent className="w-5 h-5" /> Moteur de Taxes
           </button>
           <button onClick={() => setTab('settings')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'settings' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
             <Settings className="w-5 h-5" /> Paramètres Globaux
@@ -109,6 +137,58 @@ export default function AdminHome() {
                 <div className="w-14 h-14 rounded-xl bg-purple-50 flex items-center justify-center text-purple-500"><TrendingUp className="w-7 h-7" /></div>
                 <div><p className="text-gray-500 text-sm font-semibold">Revenus Plateforme</p><p className="text-2xl font-bold">{formatFcfa(stats.totalRevenue)}</p></div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {tab === 'taxes' && (
+          <div className="max-w-4xl">
+            <h2 className="text-3xl font-bold mb-8 text-gray-800">Moteur de Taxes</h2>
+            
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-8">
+              <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Créer une nouvelle taxe</h3>
+              <form onSubmit={handleCreateTax} className="flex items-end gap-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-semibold text-gray-600 mb-2">Nom de la taxe (ex: TVA)</label>
+                  <input type="text" value={newTaxName} onChange={e => setNewTaxName(e.target.value)} required placeholder="Taxe Municipale" className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-noordrive-green" />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-semibold text-gray-600 mb-2">Taux (ex: 0.18 pour 18%)</label>
+                  <input type="number" step="0.001" value={newTaxRate} onChange={e => setNewTaxRate(e.target.value)} required placeholder="0.18" className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-noordrive-green" />
+                </div>
+                <button type="submit" className="bg-noordrive-black text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:bg-gray-800 transition">
+                  Ajouter
+                </button>
+              </form>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <table className="w-full text-left">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    <th className="p-4 font-semibold text-gray-600">Nom de la Taxe</th>
+                    <th className="p-4 font-semibold text-gray-600">Taux appliqué</th>
+                    <th className="p-4 font-semibold text-gray-600 text-right">Statut</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {taxes.length === 0 && <tr><td colSpan={3} className="p-8 text-center text-gray-500">Aucune taxe configurée.</td></tr>}
+                  {taxes.map((t) => (
+                    <tr key={t.id} className="hover:bg-gray-50 transition">
+                      <td className="p-4 font-bold text-gray-800">{t.name}</td>
+                      <td className="p-4 font-medium text-noordrive-green">{(t.rate * 100).toFixed(1)}%</td>
+                      <td className="p-4 text-right">
+                        <button 
+                          onClick={() => toggleTaxStatus(t.id, t.isActive)}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${t.isActive ? 'bg-noordrive-green' : 'bg-gray-300'}`}
+                        >
+                          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${t.isActive ? 'translate-x-6' : 'translate-x-1'}`} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
@@ -218,7 +298,7 @@ export default function AdminHome() {
 
               <div className="pt-4 flex items-center justify-end gap-4">
                 {saved && <span className="text-noordrive-green font-bold flex items-center gap-2"><CheckCircle2 className="w-5 h-5"/> Enregistré !</span>}
-                <button onClick={handleSave} className="bg-noordrive-green text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:brightness-105 transition">
+                <button onClick={handleSaveSettings} className="bg-noordrive-green text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:brightness-105 transition">
                   Sauvegarder les modifications
                 </button>
               </div>

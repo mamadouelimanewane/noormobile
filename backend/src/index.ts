@@ -154,6 +154,38 @@ app.get('/api/admin/stats', async (req, res) => {
   }
 });
 
+app.get('/api/admin/taxes', async (req, res) => {
+  try {
+    const taxes = await prisma.tax.findMany({ orderBy: { createdAt: 'asc' } });
+    res.json(taxes);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/taxes', async (req, res) => {
+  try {
+    const { name, rate } = req.body;
+    const tax = await prisma.tax.create({ data: { name, rate } });
+    res.json(tax);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/admin/taxes/:id', async (req, res) => {
+  try {
+    const { isActive } = req.body;
+    const tax = await prisma.tax.update({
+      where: { id: req.params.id },
+      data: { isActive }
+    });
+    res.json(tax);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/admin/users', async (req, res) => {
   try {
     const users = await prisma.user.findMany({
