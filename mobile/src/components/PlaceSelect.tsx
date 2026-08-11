@@ -12,6 +12,12 @@ export default function PlaceSelect({ label, value, onChange }: PlaceSelectProps
   const [results, setResults] = useState<any[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  
+  // Dummy saved places for demo. In production, fetch from backend User profile.
+  const savedPlaces = [
+    { label: 'Domicile', lat: 14.734, lng: -17.458 },
+    { label: 'Travail', lat: 14.692, lng: -17.446 },
+  ];
 
   useEffect(() => {
     setQuery(value);
@@ -57,13 +63,27 @@ export default function PlaceSelect({ label, value, onChange }: PlaceSelectProps
           setIsOpen(true);
         }}
         onFocus={() => {
-          if (results.length > 0) setIsOpen(true);
+          setIsOpen(true);
         }}
         placeholder="Entrez une adresse..."
         className="w-full border rounded-lg px-3 py-2 mt-1"
       />
-      {isOpen && results.length > 0 && (
+      {isOpen && (results.length > 0 || !query) && (
         <ul className="absolute z-50 left-0 right-0 top-[100%] bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto mt-1">
+          {results.length === 0 && !query && savedPlaces.map((sp, i) => (
+            <li
+              key={`saved-${i}`}
+              onClick={() => {
+                setQuery(sp.label);
+                setIsOpen(false);
+                onChange({ lat: sp.lat, lng: sp.lng, label: sp.label });
+              }}
+              className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm flex items-center gap-2"
+            >
+              <span className="text-gray-400">★</span>
+              <div className="font-semibold">{sp.label}</div>
+            </li>
+          ))}
           {results.map((r, i) => (
             <li
               key={i}

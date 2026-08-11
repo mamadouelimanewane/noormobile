@@ -1,22 +1,16 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import Layout from '../../components/Layout';
 import { useStore } from '../../store/useStore';
 import PlaceSelect from '../../components/PlaceSelect';
 import OffersList from '../../components/OffersList';
 import TrackingPanel from '../../components/TrackingPanel';
 import MapView from '../../components/MapView';
-import { suggestedPrice, formatFcfa } from '../../lib/geo';
+import { formatFcfa, distanceKm } from '../../lib/geo';
 import { CITY_COORDS } from '../../data/cities';
 import { VILLES_INTERCITY } from '../../types';
 import type { GeoPoint, ServiceType } from '../../types';
 
-const TABS = [
-  { key: 'ride', label: 'Course' },
-  { key: 'delivery', label: 'Livraison' },
-  { key: 'intercity', label: 'Ville à ville' },
-  { key: 'historique', label: 'Historique' },
-  { key: 'portefeuille', label: 'Portefeuille' },
-];
 
 export default function PassagerHome() {
   const [tab, setTab] = useState('ride');
@@ -33,47 +27,104 @@ export default function PassagerHome() {
 
   if (activeRequest) {
     return (
-      <Layout tabs={TABS} activeTab={tab} onTabChange={setTab}>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold">Votre demande en cours</h2>
-            {(activeRequest.status === 'recherche' || activeRequest.status === 'negociation') && (
-              <button
-                onClick={() => cancelRequest(activeRequest.id)}
-                className="text-noordrive-red text-sm font-medium"
-              >
-                Annuler
-              </button>
-            )}
-          </div>
-          {activeRequest.status === 'recherche' || activeRequest.status === 'negociation' ? (
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-3">
-                <div className="bg-white border rounded-xl p-4 text-sm text-gray-500">
-                  {activeRequest.pickup.label} → {activeRequest.dropoff.label} · votre prix proposé :{' '}
-                  <span className="font-semibold text-noordrive-black">{formatFcfa(activeRequest.proposedPrice)}</span>
+      <Layout activeTab={tab} onTabChange={setTab}>
+        {activeRequest.status === 'recherche' || activeRequest.status === 'negociation' ? (
+          <div className="absolute inset-0 z-0 flex flex-col justify-end">
+            <div className="absolute inset-0 z-0">
+              <MapView pickup={activeRequest.pickup} dropoff={activeRequest.dropoff} driverPosition={activeRequest.driverPosition} />
+            </div>
+            <motion.div 
+              initial={{ y: '100%' }} animate={{ y: 0 }} 
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] p-5 relative z-10 w-full max-w-md mx-auto"
+            >
+              <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-5" />
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold">Recherche en cours...</h2>
+                <button
+                  onClick={() => cancelRequest(activeRequest.id)}
+                  className="bg-red-50 text-noordrive-red px-3 py-1.5 rounded-full text-sm font-semibold"
+                >
+                  Annuler
+                </button>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-3 text-sm text-gray-500 mb-4 border border-gray-100">
+                <div className="flex items-center gap-2 font-medium text-black">
+                  <span className="w-2 h-2 rounded-full bg-noordrive-green" /> {activeRequest.pickup.label}
                 </div>
+                <div className="pl-3 border-l-2 border-dashed border-gray-300 ml-1 my-1 h-3" />
+                <div className="flex items-center gap-2 font-medium text-black">
+                  <span className="w-2 h-2 rounded-full bg-noordrive-black" /> {activeRequest.dropoff.label}
+                </div>
+                <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between items-center">
+                  <span>Votre proposition</span>
+                  <span className="font-bold text-lg text-noordrive-black">{formatFcfa(activeRequest.proposedPrice)}</span>
+                </div>
+              </div>
+              <div className="max-h-64 overflow-y-auto pr-1">
                 <OffersList offers={activeRequest.offers} onAccept={(offerId) => acceptOffer(activeRequest.id, offerId)} />
               </div>
-              <div className="h-72 md:h-full min-h-72">
-                <MapView pickup={activeRequest.pickup} dropoff={activeRequest.dropoff} driverPosition={activeRequest.driverPosition} />
-              </div>
-            </div>
-          ) : (
+            </motion.div>
+          </div>
+        ) : (
+          <div className="h-full flex flex-col">
             <TrackingPanel request={activeRequest} viewerRole="passager" />
-          )}
+          </div>
+        )}
+      </Layout>
+    );
+  }
+
+  // Si on affiche Historique ou Portefeuille, on ne veut pas la carte en fond, ou on la masque
+  if (tab === 'historique' || tab === 'portefeuille') {
+    return (
+      <Layout activeTab={tab} onTabChange={setTab}>
+        <div className="pt-16 max-w-xl mx-auto w-full">
+          {tab === 'historique' && <Historique requests={requests} />}
+          {tab === 'portefeuille' && <WalletTab />}
         </div>
       </Layout>
     );
   }
 
   return (
-    <Layout tabs={TABS} activeTab={tab} onTabChange={setTab}>
-      {tab === 'ride' && <RideForm onCreate={createRequest} />}
-      {tab === 'delivery' && <DeliveryForm onCreate={createRequest} />}
-      {tab === 'intercity' && <IntercityForm onCreate={createRequest} />}
-      {tab === 'historique' && <Historique requests={requests} />}
-      {tab === 'portefeuille' && <WalletTab />}
+    <Layout activeTab={tab} onTabChange={setTab}>
+      <div className="absolute inset-0 z-0">
+        <MapView />
+      </div>
+      
+      <div className="absolute bottom-0 left-0 right-0 z-10 pointer-events-none">
+        <div className="pointer-events-auto max-w-md mx-auto">
+          <motion.div 
+            initial={{ y: '100%' }} animate={{ y: 0 }} 
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] p-5"
+          >
+            <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4" />
+            <div className="flex gap-2 mb-5 overflow-x-auto pb-1 no-scrollbar">
+              {[
+                { key: 'ride', label: 'Voiture' },
+                { key: 'delivery', label: 'Livraison' },
+                { key: 'intercity', label: 'Interurbain' }
+              ].map(t => (
+                <button
+                  key={t.key}
+                  onClick={() => setTab(t.key)}
+                  className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition ${
+                    tab === t.key ? 'bg-noordrive-black text-white' : 'bg-gray-100 text-gray-600'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {tab === 'ride' && <RideForm onCreate={createRequest} />}
+            {tab === 'delivery' && <DeliveryForm onCreate={createRequest} />}
+            {tab === 'intercity' && <IntercityForm onCreate={createRequest} />}
+          </motion.div>
+        </div>
+      </div>
     </Layout>
   );
 }
@@ -89,7 +140,23 @@ function RideForm({ onCreate }: { onCreate: ReturnType<typeof useStore.getState>
     return Object.values(allDrivers).filter(d => d.isOnline).slice(0, 5).map(d => d.position);
   }, [pickup, allDrivers]);
 
-  const suggestion = pickup && dropoff ? suggestedPrice(pickup, dropoff) : null;
+  const [suggestion, setSuggestion] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (pickup && dropoff) {
+      import('../../lib/api').then(({ api }) => {
+        api.post('/pricing/estimate', { distanceKm: distanceKm(pickup, dropoff), type: 'ride', category: 'Standard' })
+          .then(res => {
+            if (res.data.ok) {
+              setSuggestion(res.data.estimatedPrice);
+              setPrice(res.data.estimatedPrice);
+            }
+          });
+      });
+    } else {
+      setSuggestion(null);
+    }
+  }, [pickup, dropoff]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

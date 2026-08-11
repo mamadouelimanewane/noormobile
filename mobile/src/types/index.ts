@@ -13,7 +13,8 @@ export type RequestStatus =
 export interface GeoPoint {
   lat: number;
   lng: number;
-  label: string;
+  label?: string;
+  heading?: number;
 }
 
 export interface User {

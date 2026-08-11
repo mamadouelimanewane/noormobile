@@ -133,11 +133,11 @@ export const useStore = create<StoreState>()(
             requests: s.requests.map((r) => (r.id === req.id ? { ...r, status: req.status, updatedAt: req.updatedAt } : r)),
           }));
         });
-        socket.off('driver:moved').on('driver:moved', (data) => {
+        socket.off('driver:moved').on('driver:moved', (data: any) => {
           set((s) => {
              const driver = s.drivers[data.driverId];
-             if (!driver) return s;
-             return { drivers: { ...s.drivers, [data.driverId]: { ...driver, position: { lat: data.lat, lng: data.lng, label: 'En mouvement' } } } };
+             if (!driver || !data.position) return s;
+             return { drivers: { ...s.drivers, [data.driverId]: { ...driver, position: { lat: data.position.lat, lng: data.position.lng, heading: data.position.heading, label: 'En mouvement' } } } };
           });
         });
       },

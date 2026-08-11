@@ -69,12 +69,35 @@ app.get('/api/admin/pending-drivers', async (req, res) => {
 
 app.post('/api/admin/approve-driver', async (req, res) => {
   try {
-    const { driverId } = req.body;
+    const { driverId, action } = req.body; // action: 'APPROVED' or 'REJECTED'
     const user = await prisma.user.update({
       where: { id: driverId },
-      data: { accountStatus: 'APPROVED' }
+      data: { accountStatus: action || 'APPROVED' }
     });
     res.json({ ok: true, user });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/driver/documents', async (req, res) => {
+  try {
+    const { driverId, type, url } = req.body;
+    const doc = await prisma.driverDocument.create({
+      data: { driverId, type, url, status: 'PENDING' }
+    });
+    res.json({ ok: true, document: doc });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/admin/documents', async (req, res) => {
+  try {
+    const docs = await prisma.driverDocument.findMany({
+      include: { driver: true }
+    });
+    res.json({ ok: true, documents: docs });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -128,6 +151,33 @@ app.post('/api/wallet/cashout', async (req, res) => {
       }
     });
     res.json({ ok: true, user: updatedUser, transaction: tx });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Pricing routes
+app.post('/api/pricing/estimate', async (req, res) => {
+  try {
+    const { distanceKm, type, category } = req.body;
+    let baseRate = 500; // Standard rate per km
+    let minPrice = 1000;
+    
+    if (category === 'Confort') {
+      baseRate = 800;
+      minPrice = 2000;
+    } else if (category === 'Moto') {
+      baseRate = 300;
+      minPrice = 500;
+    }
+    
+    // Simulate Surge Pricing (e.g., multiplier between 1.0 and 1.5 based on random demand)
+    // In a real app, this would query active requests in the geohash
+    const surgeMultiplier = 1.0 + (Math.random() * 0.5); 
+    
+    let estimatedPrice = Math.max(minPrice, Math.round(distanceKm * baseRate * surgeMultiplier));
+    
+    res.json({ ok: true, estimatedPrice, surgeMultiplier: surgeMultiplier > 1.2 });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

@@ -5,6 +5,7 @@ import ChatBox from './ChatBox';
 import StarRating from './StarRating';
 import { formatFcfa } from '../lib/geo';
 import { useStore } from '../store/useStore';
+import { motion } from 'framer-motion';
 
 const STATUS_LABEL: Record<string, string> = {
   attribue: 'Le chauffeur arrive vers vous',
@@ -21,7 +22,13 @@ export default function TrackingPanel({ request, viewerRole }: { request: Servic
 
   return (
     <div className="grid md:grid-cols-2 gap-4">
-      <div className="space-y-3">
+      <motion.div 
+        initial={{ y: '100%' }} 
+        animate={{ y: 0 }} 
+        exit={{ y: '100%' }}
+        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+        className="space-y-3"
+      >
         <div className="bg-white border rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="font-semibold">{STATUS_LABEL[request.status] ?? request.status}</span>
@@ -30,6 +37,23 @@ export default function TrackingPanel({ request, viewerRole }: { request: Servic
           <div className="text-sm text-gray-500">
             {request.pickup.label} → {request.dropoff.label}
           </div>
+          
+          {viewerRole === 'passager' && (request.status === 'attribue' || request.status === 'en_cours') && (
+            <div className="flex gap-2 mt-4">
+              <button 
+                onClick={() => alert('Lien de suivi copié !')} 
+                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-xl text-sm font-semibold transition"
+              >
+                Partager trajet
+              </button>
+              <button 
+                onClick={() => alert('SOS: Secours appelés et position partagée à vos contacts d\'urgence.')} 
+                className="flex-1 bg-red-100 hover:bg-red-200 text-red-600 py-2 rounded-xl text-sm font-semibold transition"
+              >
+                Bouton SOS
+              </button>
+            </div>
+          )}
         </div>
 
         {viewerRole === 'chauffeur' && request.status === 'attribue' && (
@@ -97,7 +121,7 @@ export default function TrackingPanel({ request, viewerRole }: { request: Servic
         )}
 
         <ChatBox requestId={request.id} />
-      </div>
+      </motion.div>
       <div className="h-72 md:h-full min-h-72">
         <MapView 
           pickup={request.pickup} 

@@ -1,15 +1,11 @@
 import { useMemo, useState } from 'react';
+import { motion } from 'framer-motion';
 import Layout from '../../components/Layout';
 import { useStore } from '../../store/useStore';
 import TrackingPanel from '../../components/TrackingPanel';
+import MapView from '../../components/MapView';
 import { formatFcfa } from '../../lib/geo';
 import type { Driver, ServiceRequest } from '../../types';
-
-const TABS = [
-  { key: 'demandes', label: 'Demandes' },
-  { key: 'courses', label: 'Mes courses' },
-  { key: 'money', label: 'Portefeuille' },
-];
 
 const TYPE_LABEL: Record<string, string> = { ride: 'Course', delivery: 'Livraison', intercity: 'Ville à ville' };
 
@@ -35,36 +31,125 @@ export default function ChauffeurHome() {
 
   if (myActive) {
     return (
-      <Layout tabs={TABS} activeTab={tab} onTabChange={setTab}>
-        <h2 className="text-xl font-bold mb-4">Course en cours</h2>
-        <TrackingPanel request={myActive} viewerRole="chauffeur" />
+      <Layout activeTab={tab} onTabChange={setTab}>
+        <div className="absolute inset-0 z-0 flex flex-col justify-end">
+          <div className="absolute inset-0 z-0">
+            <MapView 
+              pickup={myActive.pickup} 
+              dropoff={myActive.dropoff} 
+              driverPosition={myActive.driverPosition} 
+              routeOrigin={myActive.driverPosition}
+              routeDestination={myActive.status === 'attribue' ? myActive.pickup : myActive.dropoff}
+            />
+          </div>
+          <div className="h-full flex flex-col justify-end pb-4 px-4 z-10 pointer-events-none">
+            <div className="pointer-events-auto w-full max-w-md mx-auto">
+              <TrackingPanel request={myActive} viewerRole="chauffeur" />
+            </div>
+          </div>
+        </div>
       </Layout>
     );
   }
 
-  return (
-    <Layout tabs={TABS} activeTab={tab} onTabChange={setTab}>
-      <div className="flex items-center justify-between mb-5 bg-white border rounded-xl p-4">
-        <div>
-          <div className="font-semibold">{driver.vehicle.marque} {driver.vehicle.modele} · {driver.vehicle.plaque}</div>
-          <div className="text-xs text-gray-500">★ {driver.rating.toFixed(1)} ({driver.ratingCount} avis) · Solde : {formatFcfa(driver.walletBalance)}</div>
-        </div>
-        <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
-          <span className={driver.isOnline ? 'text-noordrive-green' : 'text-gray-400'}>{driver.isOnline ? 'En ligne' : 'Hors ligne'}</span>
-          <input type="checkbox" checked={driver.isOnline} onChange={(e) => driverSetOnline(driver.id, e.target.checked)} className="w-10 h-5 accent-noordrive-green" />
-        </label>
-      </div>
+  // Dashboard hors ligne ou autres onglets
+  if (!driver.isOnline || tab !== 'demandes') {
+    return (
+      <Layout activeTab={tab} onTabChange={setTab}>
+        <div className="pt-16 max-w-xl mx-auto w-full">
+          <div className="flex items-center justify-between mb-5 bg-white border rounded-xl p-4 shadow-sm">
+            <div>
+              <div className="font-semibold">{driver.vehicle.marque} {driver.vehicle.modele}</div>
+              <div className="text-xs text-gray-500">★ {driver.rating.toFixed(1)} · {driver.vehicle.plaque}</div>
+            </div>
+            <button 
+              onClick={() => driverSetOnline(driver.id, !driver.isOnline)} 
+              className={`px-5 py-2 rounded-full font-bold text-white transition ${driver.isOnline ? 'bg-noordrive-red' : 'bg-noordrive-green'}`}
+            >
+              {driver.isOnline ? 'Passer Hors ligne' : 'Passer En ligne'}
+            </button>
+          </div>
 
-      {tab === 'demandes' && (
-        !driver.isOnline ? (
-          <p className="text-center text-gray-400 py-10 text-sm">Passez en ligne pour voir les demandes disponibles.</p>
-        ) : (
+          {tab === 'demandes' && !driver.isOnline && (
+            <div className="bg-gray-100 p-8 rounded-2xl text-center">
+              <h2 className="text-xl font-bold mb-2">Vous êtes hors ligne</h2>
+              <p className="text-sm text-gray-500">Passez en ligne pour recevoir des courses et augmenter vos revenus aujourd'hui.</p>
+            </div>
+          )}
+          {tab === 'courses' && <CoursesTab requests={requests.filter((r) => r.driverId === driver.id)} />}
+          {tab === 'revenus' && <RevenusTab />}
+          {tab === 'portefeuille' && <MoneyTab driverId={driver.id} />}
+        </div>
+      </Layout>
+    );
+  }
+
+  // En ligne : Carte plein écran
+  return (
+    <Layout activeTab={tab} onTabChange={setTab}>
+      <div className="absolute inset-0 z-0">
+        <MapView driverPosition={driver.position} />
+      </div>
+      <div className="absolute top-20 left-1/2 -translate-x-1/2 z-10 bg-noordrive-black text-white px-6 py-2 rounded-full shadow-lg font-bold flex items-center gap-2">
+        <span className="w-2 h-2 bg-noordrive-green rounded-full animate-pulse" /> En ligne
+      </div>
+      <div className="absolute bottom-6 left-0 right-0 z-10 pointer-events-none px-4">
+        <div className="pointer-events-auto max-w-md mx-auto space-y-4">
           <DemandesTab requests={available} driverId={driver.id} />
-        )
-      )}
-      {tab === 'courses' && <CoursesTab requests={requests.filter((r) => r.driverId === driver.id)} />}
-      {tab === 'money' && <MoneyTab driverId={driver.id} />}
+          
+          <button 
+            onClick={() => driverSetOnline(driver.id, false)} 
+            className="w-full bg-white text-red-600 font-bold py-3 rounded-xl shadow-lg border border-red-100"
+          >
+            Se déconnecter (Hors ligne)
+          </button>
+        </div>
+      </div>
     </Layout>
+  );
+}
+
+function RevenusTab() {
+  const currentUser = useStore((s) => s.currentUser);
+  const transactions = useStore((s) => s.transactions.filter(t => t.userId === currentUser?.id && t.type === 'payment' && t.amount > 0));
+  
+  const today = new Date().toDateString();
+  const todayEarnings = transactions
+    .filter(t => new Date(t.createdAt).toDateString() === today)
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  const totalEarnings = transactions.reduce((sum, t) => sum + t.amount, 0);
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-gradient-to-r from-gray-900 to-black text-white p-6 rounded-2xl shadow-xl">
+        <p className="text-gray-400 text-sm">Gains du jour</p>
+        <h2 className="text-4xl font-bold mt-1">{formatFcfa(todayEarnings)}</h2>
+        <div className="mt-4 pt-4 border-t border-white/10 flex justify-between">
+          <span className="text-sm text-gray-300">Total Historique</span>
+          <span className="font-semibold">{formatFcfa(totalEarnings)}</span>
+        </div>
+      </div>
+      
+      <div className="bg-white border rounded-xl p-5">
+        <h3 className="font-bold mb-4 text-lg">Activité Récente</h3>
+        {transactions.length === 0 ? (
+          <p className="text-gray-400 text-sm text-center py-6">Aucun revenu pour le moment.</p>
+        ) : (
+          <div className="space-y-3">
+            {transactions.slice(0, 10).map((t, i) => (
+              <div key={i} className="flex justify-between items-center py-2 border-b last:border-0">
+                <div>
+                  <div className="font-medium text-sm">{t.description}</div>
+                  <div className="text-xs text-gray-500">{new Date(t.createdAt).toLocaleString('fr-FR')}</div>
+                </div>
+                <div className="font-bold text-noordrive-green">+{formatFcfa(t.amount)}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -72,14 +157,18 @@ function DemandesTab({ requests, driverId }: { requests: ServiceRequest[]; drive
   const driverMakeOffer = useStore((s) => s.driverMakeOffer);
   const [counterFor, setCounterFor] = useState<string | null>(null);
   const [counterPrice, setCounterPrice] = useState(0);
-  const [counterEta, setCounterEta] = useState(5);
 
   if (requests.length === 0) return <p className="text-center text-gray-400 py-10 text-sm">Aucune demande disponible pour le moment.</p>;
 
   return (
     <div className="space-y-3">
       {requests.map((r) => (
-        <div key={r.id} className="bg-white border rounded-xl p-4">
+        <motion.div 
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          key={r.id} 
+          className="bg-white border rounded-xl p-4 shadow-xl"
+        >
           <div className="flex items-center justify-between">
             <div>
               <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-full mr-2">{TYPE_LABEL[r.type]}</span>
@@ -87,54 +176,47 @@ function DemandesTab({ requests, driverId }: { requests: ServiceRequest[]; drive
               {r.packageInfo && <div className="text-xs text-gray-500 mt-1">Colis {r.packageInfo.taille} : {r.packageInfo.description}</div>}
               {r.intercityInfo && <div className="text-xs text-gray-500 mt-1">{r.intercityInfo.dateDepart} · {r.intercityInfo.places} place(s)</div>}
             </div>
-            <div className="text-noordrive-green font-bold">{formatFcfa(r.proposedPrice)}</div>
+            <div className="text-noordrive-green font-bold text-xl">{formatFcfa(r.proposedPrice)}</div>
           </div>
-          <div className="flex gap-2 mt-3">
+          <div className="flex gap-2 mt-4">
             <button
               onClick={() => driverMakeOffer(r.id, driverId, r.proposedPrice, 5)}
-              className="bg-noordrive-black text-white text-xs font-semibold px-4 py-1.5 rounded-full"
+              className="flex-1 bg-noordrive-black text-white text-sm font-semibold py-2.5 rounded-xl"
             >
-              Accepter à ce prix
+              Accepter
             </button>
             {counterFor === r.id ? (
-              <div className="flex items-center gap-2">
+              <div className="flex-1 flex items-center gap-2">
                 <input
                   type="number"
                   value={counterPrice || ''}
                   onChange={(e) => setCounterPrice(Number(e.target.value))}
                   placeholder="Prix"
-                  className="border rounded-lg px-2 py-1 text-xs w-24"
-                />
-                <input
-                  type="number"
-                  value={counterEta}
-                  onChange={(e) => setCounterEta(Number(e.target.value))}
-                  placeholder="ETA min"
-                  className="border rounded-lg px-2 py-1 text-xs w-16"
+                  className="flex-1 border rounded-xl px-2 py-2 text-sm min-w-0"
                 />
                 <button
                   onClick={() => {
                     if (counterPrice > 0) {
-                      driverMakeOffer(r.id, driverId, counterPrice, counterEta);
+                      driverMakeOffer(r.id, driverId, counterPrice, 5);
                       setCounterFor(null);
                       setCounterPrice(0);
                     }
                   }}
-                  className="bg-noordrive-green text-white text-xs font-semibold px-3 py-1.5 rounded-full"
+                  className="bg-noordrive-green text-white text-sm font-semibold px-4 py-2.5 rounded-xl"
                 >
-                  Envoyer
+                  Go
                 </button>
               </div>
             ) : (
               <button
                 onClick={() => setCounterFor(r.id)}
-                className="border text-xs font-semibold px-4 py-1.5 rounded-full"
+                className="flex-1 border border-gray-300 text-gray-700 text-sm font-semibold py-2.5 rounded-xl"
               >
-                Contre-proposer
+                Proposer +
               </button>
             )}
           </div>
-        </div>
+        </motion.div>
       ))}
     </div>
   );

@@ -5,12 +5,14 @@ import PassagerHome from './pages/passager/PassagerHome';
 import ChauffeurHome from './pages/chauffeur/ChauffeurHome';
 import PendingValidation from './pages/chauffeur/PendingValidation';
 import ProtectedRoute from './components/ProtectedRoute';
+import LocationTracker from './components/LocationTracker';
 
 export default function App() {
 
 
   return (
     <BrowserRouter>
+      <LocationTracker />
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/connexion" element={<Auth />} />

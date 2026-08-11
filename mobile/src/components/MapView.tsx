@@ -13,11 +13,12 @@ const dotIcon = (color: string, label?: string) =>
     iconAnchor: [8, 8],
   });
 
-const carIcon = L.divIcon({
-  className: 'noordrive-marker',
-  html: `<div style="font-size:22px;transform:translate(-50%,-50%)">🚗</div>`,
-  iconSize: [0, 0],
-});
+const carIcon = (_color: string, heading?: number) =>
+  L.divIcon({
+    className: 'noordrive-marker',
+    html: `<div style="font-size:22px;transform:translate(-50%,-50%) rotate(${heading || 0}deg)">🚗</div>`,
+    iconSize: [0, 0],
+  });
 
 interface MapViewProps {
   pickup?: GeoPoint;
@@ -118,10 +119,12 @@ export default function MapView({ pickup, dropoff, driverPosition, nearbyCars, c
           />
         )}
         {driverPosition && (
-          <Marker position={[driverPosition.lat, driverPosition.lng]} icon={carIcon} />
+          <Marker position={[driverPosition.lat, driverPosition.lng]} icon={carIcon('#000', driverPosition.heading)}>
+            <Popup>Votre chauffeur</Popup>
+          </Marker>
         )}
         {nearbyCars?.map((c, i) => (
-          <Marker key={`nc-${i}`} position={[c.lat, c.lng]} icon={carIcon} />
+          <Marker key={`nc-${i}`} position={[c.lat, c.lng]} icon={carIcon('#1cc6f4', c.heading)} />
         ))}
         {extraMarkers?.map((m, i) => (
           <Marker key={i} position={[m.point.lat, m.point.lng]} icon={dotIcon(m.color, m.label)} />

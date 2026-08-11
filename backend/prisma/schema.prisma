@@ -15,12 +15,20 @@ model User {
   ratingCount   Int      @default(0)
   avatarColor   String
   walletBalance Float    @default(0.0)
+  
+  // Passenger Specifics
+  savedHome     String?
+  savedWork     String?
+  emergencyName String?
+  emergencyPhone String?
+
   createdAt     DateTime @default(now())
 
   // Driver specifics
   isOnline      Boolean  @default(false)
   accountStatus String   @default("APPROVED") // "APPROVED", "PENDING", "REJECTED"
   vehicle       Vehicle?
+  documents     DriverDocument[]
   
   // Relations
   requestsAsPassenger ServiceRequest[] @relation("PassengerRequests")
@@ -38,6 +46,7 @@ model Vehicle {
   modele   String
   plaque   String
   couleur  String
+  category String @default("Standard") // "Standard", "Confort", "Moto"
   driver   User   @relation(fields: [driverId], references: [id])
 }
 
@@ -132,4 +141,14 @@ model PlatformSettings {
   id             String @id @default("default")
   commissionRate Float  @default(0.12)
   taxRate        Float  @default(0.18)
+}
+
+model DriverDocument {
+  id        String   @id @default(cuid())
+  driverId  String
+  driver    User     @relation(fields: [driverId], references: [id])
+  type      String   // "ID_CARD", "DRIVING_LICENSE", "VEHICLE_REGISTRATION"
+  url       String   // URL to the uploaded file
+  status    String   @default("PENDING") // "PENDING", "APPROVED", "REJECTED"
+  createdAt DateTime @default(now())
 }
