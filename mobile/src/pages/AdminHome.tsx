@@ -22,6 +22,9 @@ export default function AdminHome() {
   const [usersList, setUsersList] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loans, setLoans] = useState<any[]>([]);
+  const [tickets, setTickets] = useState<any[]>([]);
+  const [activeTicket, setActiveTicket] = useState<any>(null);
+  const [replyText, setReplyText] = useState('');
   
   const [taxes, setTaxes] = useState<any[]>([]);
   const [newTaxName, setNewTaxName] = useState('');
@@ -57,6 +60,7 @@ export default function AdminHome() {
       api.get('/admin/taxes').then(res => setTaxes(res.data)).catch(console.error);
       api.get('/admin/transactions').then(res => setTransactions(res.data)).catch(console.error);
       api.get('/admin/loans').then(res => setLoans(res.data)).catch(console.error);
+      api.get('/admin/tickets').then(res => setTickets(res.data)).catch(console.error);
     });
   };
 
@@ -176,6 +180,34 @@ export default function AdminHome() {
     setCrmEdit(false);
   };
 
+  const loadTicket = (id: string) => {
+    import('../lib/api').then(({ api }) => {
+      api.get(`/support/tickets/${id}`).then(res => setActiveTicket(res.data)).catch(console.error);
+    });
+  };
+
+  const handleReplyTicket = (e: React.FormEvent) => {
+    e.preventDefault();
+    if(!replyText.trim() || !activeTicket) return;
+    import('../lib/api').then(({ api }) => {
+      // In AdminHome we assume admin's ID or system senderId
+      api.post(`/support/tickets/${activeTicket.id}/messages`, { senderId: 'ADMIN', text: replyText, isAdmin: true }).then(() => {
+        setReplyText('');
+        loadTicket(activeTicket.id);
+        fetchData();
+      }).catch(console.error);
+    });
+  };
+
+  const handleResolveTicket = (id: string) => {
+    import('../lib/api').then(({ api }) => {
+      api.put(`/support/tickets/${id}/status`, { status: 'RESOLVED' }).then(() => {
+        if(activeTicket?.id === id) loadTicket(id);
+        fetchData();
+      }).catch(console.error);
+    });
+  };
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -234,6 +266,9 @@ export default function AdminHome() {
           </button>
           <button onClick={() => setTab('users')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'users' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
             <Users className="w-5 h-5" /> CRM Utilisateurs
+          </button>
+          <button onClick={() => setTab('support')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'support' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
+            <HelpCircle className="w-5 h-5" /> Support Client
           </button>
           <button onClick={() => setTab('loans')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'loans' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
             <Landmark className="w-5 h-5" /> Micro-crédits
@@ -590,12 +625,6 @@ export default function AdminHome() {
             </div>
           </div>
         )}
-        {tab === 'taxes' && (
-          <div>
-            <h2 className="text-3xl font-bold mb-8 text-gray-800">Moteur de Taxes</h2>
-            {/* ... contenu taxes ... */}
-          </div>
-        )}
 
         {tab === 'loans' && (
           <div>
@@ -657,6 +686,77 @@ export default function AdminHome() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {tab === 'support' && (
+          <div className="h-full flex flex-col">
+            <h2 className="text-3xl font-bold mb-8 text-gray-800">Support Client & Tickets</h2>
+            
+            <div className="flex flex-1 gap-6 min-h-[500px]">
+              {/* List */}
+              <div className="w-1/3 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-y-auto">
+                <div className="p-4 border-b font-bold sticky top-0 bg-white">Tickets récents</div>
+                <div className="divide-y">
+                  {tickets.length === 0 && <p className="p-8 text-center text-gray-500 text-sm">Aucun ticket</p>}
+                  {tickets.map(t => (
+                    <button key={t.id} onClick={() => loadTicket(t.id)} className={`w-full text-left p-4 hover:bg-gray-50 transition ${activeTicket?.id === t.id ? 'bg-blue-50' : ''}`}>
+                      <div className="flex justify-between items-start mb-1">
+                        <p className="font-bold text-sm text-gray-800 line-clamp-1">{t.subject}</p>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${t.status==='OPEN' ? 'bg-red-100 text-red-600' : t.status==='IN_PROGRESS' ? 'bg-orange-100 text-orange-600' : 'bg-green-100 text-green-600'}`}>
+                          {t.status}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 mb-1">{t.user?.name} ({t.user?.phone})</p>
+                      <p className="text-xs text-gray-400">{new Date(t.createdAt).toLocaleDateString()}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Chat View */}
+              <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col">
+                {activeTicket ? (
+                  <>
+                    <div className="p-4 border-b border-gray-100 flex justify-between items-center">
+                      <div>
+                        <h3 className="font-bold text-lg">{activeTicket.subject}</h3>
+                        <p className="text-sm text-gray-500">Client: {activeTicket.user?.name} ({activeTicket.user?.phone})</p>
+                      </div>
+                      {activeTicket.status !== 'RESOLVED' && activeTicket.status !== 'CLOSED' && (
+                        <button onClick={() => handleResolveTicket(activeTicket.id)} className="bg-green-100 text-green-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-green-200">
+                          Marquer Résolu
+                        </button>
+                      )}
+                    </div>
+                    
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+                      {activeTicket.messages?.map((m: any) => (
+                        <div key={m.id} className={`flex ${m.isAdmin ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`max-w-[70%] p-3 rounded-2xl ${m.isAdmin ? 'bg-noordrive-green text-white rounded-tr-none' : 'bg-white border border-gray-200 rounded-tl-none'}`}>
+                            <p className="text-sm">{m.text}</p>
+                            <p className={`text-[10px] mt-1 text-right ${m.isAdmin ? 'text-white/70' : 'text-gray-400'}`}>
+                              {new Date(m.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {(activeTicket.status !== 'RESOLVED' && activeTicket.status !== 'CLOSED') && (
+                      <form onSubmit={handleReplyTicket} className="p-4 border-t border-gray-100 flex gap-2">
+                        <input type="text" value={replyText} onChange={e=>setReplyText(e.target.value)} placeholder="Votre réponse..." className="flex-1 bg-gray-100 rounded-xl px-4 outline-none" />
+                        <button type="submit" disabled={!replyText.trim()} className="px-6 py-3 bg-blue-600 text-white font-bold rounded-xl disabled:opacity-50">Envoyer</button>
+                      </form>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex-1 flex items-center justify-center text-gray-400">
+                    <p>Sélectionnez un ticket pour afficher la conversation.</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

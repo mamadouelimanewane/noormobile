@@ -12,6 +12,7 @@ import ParrainageTab from '../../components/ParrainageTab';
 import Wallet from '../../components/Wallet';
 import DriverCarpool from '../../components/DriverCarpool';
 import MicroCredit from '../../components/MicroCredit';
+import Support from '../../components/Support';
 
 const TYPE_LABEL: Record<string, string> = { ride: 'Course', delivery: 'Livraison', intercity: 'Ville à ville' };
 
@@ -95,6 +96,7 @@ export default function ChauffeurHome() {
           {tab === 'portefeuille' && <Wallet />}
           {tab === 'microcredit' && <MicroCredit />}
           {tab === 'covoiturage' && <DriverCarpool />}
+          {tab === 'support' && <Support />}
           {tab === 'parrainage' && <ParrainageTab />}
         </div>
       </Layout>

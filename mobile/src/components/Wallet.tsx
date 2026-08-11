@@ -34,15 +34,33 @@ export default function Wallet() {
     e.preventDefault();
     setLoading(true);
     try {
-      // Simulate Payment Gateway delay
-      await new Promise(r => setTimeout(r, 2000));
-      await api.post('/wallet/topup', { userId: user?.id, amount: Number(amount), method });
-      alert(`Rechargement de ${formatFcfa(Number(amount))} réussi via ${method.toUpperCase()} !`);
+      const res = await api.post('/wallet/init-payment', {
+        userId: user?.id,
+        amount: Number(amount),
+        method,
+        phone
+      });
+      
+      // In a real app we redirect to res.data.paymentUrl
+      // window.location.href = res.data.paymentUrl;
+      
+      // For this demo, we'll simulate the webhook being called after 3 seconds
+      alert('Redirection vers la passerelle de paiement...');
+      setTimeout(async () => {
+        await api.post('/webhooks/payments', {
+          reference: res.data.reference,
+          status: 'success',
+          amount: Number(amount)
+        });
+        alert('Paiement réussi via Webhook (Simulation) !');
+        fetchWallet();
+      }, 3000);
+      
       setShowTopup(false);
       setAmount('');
-      fetchWallet();
     } catch (err) {
-      alert('Erreur lors du rechargement');
+      console.error(err);
+      alert('Erreur lors de l\'initiation du paiement');
     }
     setLoading(false);
   };

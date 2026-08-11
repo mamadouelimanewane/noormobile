@@ -7,6 +7,22 @@ import { PrismaClient } from '@prisma/client';
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
+
+// --- PUSH NOTIFICATIONS SERVICE (MOCK) ---
+const sendPushNotification = async (userId: string, title: string, body: string) => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { fcmToken: true } });
+    if (user?.fcmToken) {
+      console.log(`\n🔔 [PUSH NOTIFICATION to ${user.fcmToken}]: ${title} - ${body}\n`);
+    }
+  } catch(e) {
+    console.error('Failed to send push notification', e);
+  }
+};
+// -----------------------------------------
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
@@ -14,10 +30,6 @@ const io = new Server(httpServer, {
     origin: '*',
   }
 });
-
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
 
 app.use(cors());
 app.use(express.json());
@@ -110,6 +122,19 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+app.post('/api/users/:id/fcm-token', async (req, res) => {
+  try {
+    const { token } = req.body;
+    const user = await prisma.user.update({
+      where: { id: req.params.id },
+      data: { fcmToken: token }
+    });
+    res.json({ ok: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // --- WALLET APIS ---
 app.get('/api/wallet/history/:userId', async (req, res) => {
   try {
@@ -174,7 +199,74 @@ app.post('/api/wallet/cashout', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+app.post('/api/wallet/init-payment', async (req, res) => {
+  try {
+    const { userId, amount, method, phone } = req.body;
+    if(amount <= 0) return res.status(400).json({error: 'Invalid amount'});
+    
+    // In a real scenario, this would call Wave or PayDunya API to generate a payment URL or trigger USSD push.
+    // For now, we simulate sending the request to the aggregator and creating a pending transaction.
+    const reference = `PAY-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+    
+    await prisma.transaction.create({
+      data: {
+        userId, type: 'topup', amount, method: method || 'mobile_money',
+        status: 'pending', reference, description: `Rechargement en attente (${phone || 'Mobile'})`
+      }
+    });
+
+    // Simulate Payment Gateway Response
+    const mockPaymentUrl = `https://pay-gateway-simulator.com/checkout/${reference}`;
+    
+    res.json({ ok: true, reference, paymentUrl: mockPaymentUrl, status: 'pending' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Webhook to receive payment confirmation from Wave / Orange Money / PayDunya
+app.post('/api/webhooks/payments', async (req, res) => {
+  try {
+    // 1. Verify webhook signature (Security)
+    // const signature = req.headers['x-webhook-signature'];
+    
+    const { reference, status, amount } = req.body; // Payload sent by the aggregator
+
+    const transaction = await prisma.transaction.findFirst({ where: { reference } });
+    if (!transaction) return res.status(404).json({ error: 'Transaction non trouvée' });
+    if (transaction.status === 'completed') return res.status(200).json({ ok: true, note: 'Already processed' });
+
+    if (status === 'success' || status === 'completed') {
+      // Execute the topup transaction atomically
+      await prisma.$transaction([
+        prisma.transaction.update({
+          where: { id: transaction.id },
+          data: { status: 'completed' }
+        }),
+        prisma.user.update({
+          where: { id: transaction.userId },
+          data: { walletBalance: { increment: transaction.amount } }
+        })
+      ]);
+      console.log(`Webhook: Payment ${reference} successful. Wallet credited.`);
+    } else if (status === 'failed' || status === 'cancelled') {
+      await prisma.transaction.update({
+        where: { id: transaction.id },
+        data: { status: 'failed' }
+      });
+      console.log(`Webhook: Payment ${reference} failed.`);
+    }
+
+    res.status(200).json({ received: true });
+  } catch (err: any) {
+    console.error('Webhook error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
 // --------------------
+
+// --- MICRO-CREDIT APIS ----------------
 
 // --- COVOITURAGE INTERURBAIN APIS ---
 app.get('/api/carpool/trips', async (req, res) => {
@@ -349,6 +441,10 @@ app.post('/api/admin/loans/approve', async (req, res) => {
         }
       })
     ]);
+    
+    // Notify Driver via Push
+    sendPushNotification(loan.driverId, 'Prêt Approuvé', `Votre prêt de ${loan.montant} FCFA a été viré sur votre wallet.`);
+    
     res.json({ ok: true });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -820,6 +916,10 @@ io.on('connection', (socket) => {
     });
     if (!offer) return;
 
+    if (offer.driver?.fcmToken) {
+      sendPushNotification(offer.driverId, 'Course attribuée', 'Une nouvelle course vous a été attribuée.');
+    }
+
     const req = await prisma.serviceRequest.update({
       where: { id: offer.requestId },
       data: {
@@ -946,6 +1046,101 @@ io.on('connection', (socket) => {
     console.log('User disconnected:', socket.id);
   });
 });
+
+// --- SUPPORT TICKETS APIS ---
+app.post('/api/support/tickets', async (req, res) => {
+  try {
+    const { userId, subject, category, referenceId, initialMessage } = req.body;
+    const ticket = await prisma.supportTicket.create({
+      data: {
+        userId, subject, category, referenceId,
+        messages: {
+          create: { senderId: userId, text: initialMessage }
+        }
+      },
+      include: { messages: true }
+    });
+    res.json(ticket);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/support/tickets/user/:userId', async (req, res) => {
+  try {
+    const tickets = await prisma.supportTicket.findMany({
+      where: { userId: req.params.userId },
+      orderBy: { updatedAt: 'desc' }
+    });
+    res.json(tickets);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/support/tickets', async (req, res) => {
+  try {
+    const tickets = await prisma.supportTicket.findMany({
+      include: { user: { select: { name: true, phone: true } } },
+      orderBy: { updatedAt: 'desc' }
+    });
+    res.json(tickets);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/support/tickets/:id', async (req, res) => {
+  try {
+    const ticket = await prisma.supportTicket.findUnique({
+      where: { id: req.params.id },
+      include: { 
+        messages: { include: { sender: { select: { name: true, role: true } } }, orderBy: { createdAt: 'asc' } },
+        user: { select: { name: true, phone: true, role: true } }
+      }
+    });
+    res.json(ticket);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/support/tickets/:id/messages', async (req, res) => {
+  try {
+    const { senderId, text, isAdmin } = req.body;
+    const message = await prisma.ticketMessage.create({
+      data: {
+        ticketId: req.params.id,
+        senderId, text, isAdmin
+      },
+      include: { sender: { select: { name: true, role: true } } }
+    });
+    
+    await prisma.supportTicket.update({
+      where: { id: req.params.id },
+      data: { updatedAt: new Date(), status: isAdmin ? 'IN_PROGRESS' : 'OPEN' }
+    });
+    
+    // In a real app we'd emit via Socket.io to the specific user/admin room
+    res.json(message);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/support/tickets/:id/status', async (req, res) => {
+  try {
+    const { status } = req.body;
+    const ticket = await prisma.supportTicket.update({
+      where: { id: req.params.id },
+      data: { status }
+    });
+    res.json(ticket);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+// --------------------
 
 const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, () => {
