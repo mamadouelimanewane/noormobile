@@ -4,8 +4,6 @@ import cors from 'cors';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { PrismaClient } from '@prisma/client';
-import { createClient } from '@libsql/client';
-import { PrismaLibSql } from '@prisma/adapter-libsql';
 
 const app = express();
 const httpServer = createServer(app);
@@ -15,9 +13,7 @@ const io = new Server(httpServer, {
   }
 });
 
-const libsql = createClient({ url: 'file:./dev.db' });
-const adapter = new PrismaLibSql(libsql);
-const prisma = new PrismaClient({ adapter });
+const prisma = new PrismaClient();
 
 app.use(cors());
 app.use(express.json());
@@ -266,7 +262,10 @@ io.on('connection', (socket) => {
 
   socket.on('ride:accept', async (data) => {
     // Passenger accepts an offer
-    const offer = await prisma.offer.findUnique({ where: { id: data.offerId }, include: { driver: true } });
+    const offer = await prisma.offer.findUnique({ 
+      where: { id: data.offerId }, 
+      include: { driver: { include: { vehicle: true } } } 
+    });
     if (!offer) return;
 
     const req = await prisma.serviceRequest.update({
