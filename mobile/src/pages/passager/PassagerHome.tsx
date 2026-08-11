@@ -19,6 +19,7 @@ export default function PassagerHome() {
   const requests = useMemo(() => allRequests.filter((r) => r.passengerId === currentUser.id), [allRequests, currentUser.id]);
   const createRequest = useStore((s) => s.createRequest);
   const acceptOffer = useStore((s) => s.acceptOffer);
+  const declineOffer = useStore((s) => s.declineOffer);
   const cancelRequest = useStore((s) => s.cancelRequest);
 
   const activeRequest = requests.find(
@@ -62,7 +63,11 @@ export default function PassagerHome() {
                 </div>
               </div>
               <div className="max-h-64 overflow-y-auto pr-1">
-                <OffersList offers={activeRequest.offers} onAccept={(offerId) => acceptOffer(activeRequest.id, offerId)} />
+                <OffersList 
+                  offers={activeRequest.offers} 
+                  onAccept={(offerId) => acceptOffer(activeRequest.id, offerId)} 
+                  onDecline={(offerId) => declineOffer(activeRequest.id, offerId)}
+                />
               </div>
             </motion.div>
           </div>

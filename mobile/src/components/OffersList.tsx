@@ -5,9 +5,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface OffersListProps {
   offers: Offer[];
   onAccept: (offerId: string) => void;
+  onDecline: (offerId: string) => void;
 }
 
-export default function OffersList({ offers, onAccept }: OffersListProps) {
+export default function OffersList({ offers, onAccept, onDecline }: OffersListProps) {
   const active = offers.filter((o) => o.status === 'en_attente').sort((a, b) => a.price - b.price);
 
   return (
@@ -34,14 +35,22 @@ export default function OffersList({ offers, onAccept }: OffersListProps) {
                     {o.vehicle} · ★ {o.driverRating.toFixed(1)} · arrivée en {o.etaMin} min
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="font-bold text-noordrive-green text-lg">{formatFcfa(o.price)}</div>
-                  <button
-                    onClick={() => onAccept(o.id)}
-                    className="mt-1 bg-noordrive-black text-white text-xs font-semibold px-4 py-1.5 rounded-full hover:bg-black transition"
-                  >
-                    Accepter
-                  </button>
+                <div className="text-right flex flex-col items-end">
+                  <div className="font-bold text-noordrive-green text-lg mb-1">{formatFcfa(o.price)}</div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => onDecline(o.id)}
+                      className="bg-gray-100 text-gray-500 text-xs font-semibold px-3 py-1.5 rounded-full hover:bg-gray-200 transition"
+                    >
+                      Refuser
+                    </button>
+                    <button
+                      onClick={() => onAccept(o.id)}
+                      className="bg-noordrive-black text-white text-xs font-semibold px-4 py-1.5 rounded-full hover:bg-black transition"
+                    >
+                      Accepter
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             ))}

@@ -50,6 +50,7 @@ interface StoreState {
   }) => string;
   driverMakeOffer: (requestId: string, driverId: string, price: number, etaMin: number) => void;
   acceptOffer: (requestId: string, offerId: string) => void;
+  declineOffer: (requestId: string, offerId: string) => void;
   cancelRequest: (requestId: string) => void;
   updateRideStatus: (requestId: string, status: 'en_cours' | 'termine') => void;
   sendMessage: (requestId: string, text: string) => void;
@@ -229,6 +230,22 @@ export const useStore = create<StoreState>()(
 
       acceptOffer: (requestId, offerId) => {
         socket.emit('ride:accept', { requestId, offerId });
+      },
+
+      declineOffer: (requestId, offerId) => {
+        set(s => {
+          const reqIndex = s.requests.findIndex(r => r.id === requestId);
+          if (reqIndex !== -1) {
+            const req = s.requests[reqIndex];
+            const newRequests = [...s.requests];
+            newRequests[reqIndex] = {
+              ...req,
+              offers: req.offers.filter(o => o.id !== offerId) // On le retire simplement de la liste locale
+            };
+            return { requests: newRequests };
+          }
+          return s;
+        });
       },
 
       cancelRequest: (requestId) => {

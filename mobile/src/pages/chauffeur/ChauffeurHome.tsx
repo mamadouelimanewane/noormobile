@@ -155,8 +155,6 @@ function RevenusTab() {
 
 function DemandesTab({ requests, driverId }: { requests: ServiceRequest[]; driverId: string }) {
   const driverMakeOffer = useStore((s) => s.driverMakeOffer);
-  const [counterFor, setCounterFor] = useState<string | null>(null);
-  const [counterPrice, setCounterPrice] = useState(0);
 
   if (requests.length === 0) return <p className="text-center text-gray-400 py-10 text-sm">Aucune demande disponible pour le moment.</p>;
 
@@ -178,43 +176,28 @@ function DemandesTab({ requests, driverId }: { requests: ServiceRequest[]; drive
             </div>
             <div className="text-noordrive-green font-bold text-xl">{formatFcfa(r.proposedPrice)}</div>
           </div>
-          <div className="flex gap-2 mt-4">
+          <div className="text-xs text-gray-500 mb-3 text-right">
+            Gain estimé : <span className="font-bold text-gray-700">{formatFcfa(r.proposedPrice * 0.88)}</span> (Com. 12%)
+          </div>
+          <div className="flex gap-2">
             <button
               onClick={() => driverMakeOffer(r.id, driverId, r.proposedPrice, 5)}
-              className="flex-1 bg-noordrive-black text-white text-sm font-semibold py-2.5 rounded-xl"
+              className="flex-[2] bg-noordrive-black text-white text-sm font-semibold py-2.5 rounded-xl shadow-md hover:bg-black transition"
             >
               Accepter
             </button>
-            {counterFor === r.id ? (
-              <div className="flex-1 flex items-center gap-2">
-                <input
-                  type="number"
-                  value={counterPrice || ''}
-                  onChange={(e) => setCounterPrice(Number(e.target.value))}
-                  placeholder="Prix"
-                  className="flex-1 border rounded-xl px-2 py-2 text-sm min-w-0"
-                />
-                <button
-                  onClick={() => {
-                    if (counterPrice > 0) {
-                      driverMakeOffer(r.id, driverId, counterPrice, 5);
-                      setCounterFor(null);
-                      setCounterPrice(0);
-                    }
-                  }}
-                  className="bg-noordrive-green text-white text-sm font-semibold px-4 py-2.5 rounded-xl"
-                >
-                  Go
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setCounterFor(r.id)}
-                className="flex-1 border border-gray-300 text-gray-700 text-sm font-semibold py-2.5 rounded-xl"
-              >
-                Proposer +
-              </button>
-            )}
+            <button
+              onClick={() => driverMakeOffer(r.id, driverId, r.proposedPrice + 500, 5)}
+              className="flex-1 bg-gray-100 text-gray-700 text-sm font-bold py-2.5 rounded-xl border hover:bg-gray-200 transition"
+            >
+              +500
+            </button>
+            <button
+              onClick={() => driverMakeOffer(r.id, driverId, r.proposedPrice + 1000, 5)}
+              className="flex-1 bg-gray-100 text-gray-700 text-sm font-bold py-2.5 rounded-xl border hover:bg-gray-200 transition"
+            >
+              +1000
+            </button>
           </div>
         </motion.div>
       ))}
