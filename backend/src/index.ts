@@ -207,6 +207,82 @@ app.get('/api/admin/pending-drivers', async (req, res) => {
   }
 });
 
+app.get('/api/admin/transactions', async (req, res) => {
+  try {
+    const transactions = await prisma.transaction.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { user: { select: { name: true, phone: true, role: true } } }
+    });
+    res.json(transactions);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/wallet/adjust', async (req, res) => {
+  try {
+    const { userId, amount, description } = req.body;
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { walletBalance: { increment: amount } }
+    });
+    
+    await prisma.transaction.create({
+      data: {
+        userId,
+        type: amount >= 0 ? 'topup' : 'cashout',
+        amount,
+        method: 'admin_adjustment',
+        status: 'completed',
+        reference: `ADMIN-${Date.now()}`,
+        description: description || 'Ajustement manuel par Admin'
+      }
+    });
+    
+    res.json(user);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/wallet/import', async (req, res) => {
+  try {
+    const { data } = req.body; // array of { phone, amount }
+    const results = { success: 0, failed: 0 };
+    
+    for (const item of data) {
+      try {
+        const user = await prisma.user.findUnique({ where: { phone: item.phone } });
+        if (user) {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { walletBalance: { increment: Number(item.amount) } }
+          });
+          await prisma.transaction.create({
+            data: {
+              userId: user.id,
+              type: Number(item.amount) >= 0 ? 'topup' : 'cashout',
+              amount: Number(item.amount),
+              method: 'admin_import',
+              status: 'completed',
+              reference: `IMPORT-${Date.now()}`,
+              description: 'Rechargement via Import CSV'
+            }
+          });
+          results.success++;
+        } else {
+          results.failed++;
+        }
+      } catch(e) {
+        results.failed++;
+      }
+    }
+    res.json(results);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/admin/approve-driver', async (req, res) => {
   try {
     const { driverId, action } = req.body; // action: 'APPROVED' or 'REJECTED'

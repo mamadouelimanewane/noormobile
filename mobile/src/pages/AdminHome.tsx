@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
-import { Settings, Users, LogOut, CheckCircle2, LayoutDashboard, CreditCard, Activity, TrendingUp, Percent } from 'lucide-react';
+import { Settings, Users, LogOut, CheckCircle2, LayoutDashboard, CreditCard, Activity, TrendingUp, Percent, Wallet, Download, Upload, Edit3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatFcfa } from '../lib/geo';
 
@@ -20,10 +20,15 @@ export default function AdminHome() {
   const [saved, setSaved] = useState(false);
   const [stats, setStats] = useState({ totalUsers: 0, totalRides: 0, totalRevenue: 0 });
   const [usersList, setUsersList] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<any[]>([]);
   
   const [taxes, setTaxes] = useState<any[]>([]);
   const [newTaxName, setNewTaxName] = useState('');
   const [newTaxRate, setNewTaxRate] = useState('');
+
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [editAmount, setEditAmount] = useState<number>(0);
+  const [editDescription, setEditDescription] = useState<string>('Ajustement Admin');
 
   useEffect(() => {
     fetchData();
@@ -44,6 +49,7 @@ export default function AdminHome() {
       api.get('/admin/stats').then(res => setStats(res.data)).catch(console.error);
       api.get('/admin/users').then(res => setUsersList(res.data)).catch(console.error);
       api.get('/admin/taxes').then(res => setTaxes(res.data)).catch(console.error);
+      api.get('/admin/transactions').then(res => setTransactions(res.data)).catch(console.error);
     });
   };
 
@@ -74,30 +80,83 @@ export default function AdminHome() {
 
   const toggleTaxStatus = (taxId: string, currentStatus: boolean) => {
     import('../lib/api').then(({ api }) => {
-      api.put(`/admin/taxes/${taxId}`, { isActive: !currentStatus }).then(() => {
-        fetchData();
-      }).catch(console.error);
+      api.put(`/admin/taxes/${taxId}`, { isActive: !currentStatus }).then(() => fetchData()).catch(console.error);
     });
   };
 
   const toggleUserStatus = (driverId: string, currentStatus: string) => {
     const newStatus = currentStatus === 'APPROVED' ? 'REJECTED' : 'APPROVED';
     import('../lib/api').then(({ api }) => {
-      api.post('/admin/approve-driver', { driverId, action: newStatus })
-        .then(() => fetchData())
-        .catch(console.error);
+      api.post('/admin/approve-driver', { driverId, action: newStatus }).then(() => fetchData()).catch(console.error);
     });
+  };
+
+  const handleAdjustWallet = (userId: string) => {
+    if (!editAmount || editAmount === 0) return setEditingUserId(null);
+    import('../lib/api').then(({ api }) => {
+      api.post('/admin/wallet/adjust', { userId, amount: editAmount, description: editDescription }).then(() => {
+        setEditingUserId(null);
+        setEditAmount(0);
+        fetchData();
+      }).catch(console.error);
+    });
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      const lines = text.split('\n');
+      const data = lines.map(line => {
+        const [phone, amount] = line.split(',');
+        return { phone: phone?.trim(), amount: Number(amount?.trim()) };
+      }).filter(i => i.phone && !isNaN(i.amount));
+      
+      if(data.length > 0) {
+        import('../lib/api').then(({ api }) => {
+          api.post('/admin/wallet/import', { data }).then(res => {
+            alert(`Succès: ${res.data.success}, Échecs: ${res.data.failed}`);
+            fetchData();
+          });
+        });
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const downloadCSV = (type: 'users' | 'transactions') => {
+    let csv = '';
+    if (type === 'users') {
+      csv = 'ID,Nom,Telephone,Role,Statut,Portefeuille\n';
+      usersList.forEach(u => { csv += `${u.id},${u.name},${u.phone},${u.role},${u.accountStatus},${u.walletBalance}\n`; });
+    } else {
+      csv = 'ID,Date,Nom,Telephone,Role,Type,Montant,Methode,Description\n';
+      transactions.forEach(t => { 
+        csv += `${t.id},${new Date(t.createdAt).toISOString()},${t.user.name},${t.user.phone},${t.user.role},${t.type},${t.amount},${t.method},${t.description}\n`; 
+      });
+    }
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `export_${type}_${new Date().getTime()}.csv`;
+    a.click();
   };
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
       <div className="w-64 bg-noordrive-black text-white p-6 flex flex-col">
-        <h1 className="text-2xl font-black tracking-tighter mb-10"><span className="text-noordrive-green">●</span> NOORDRIVE ADMIN</h1>
+        <h1 className="text-2xl font-black tracking-tighter mb-10"><span className="text-noordrive-green">●</span> ADMIN</h1>
         
         <nav className="flex-1 space-y-2">
           <button onClick={() => setTab('dashboard')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'dashboard' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
             <LayoutDashboard className="w-5 h-5" /> Vue d'ensemble
+          </button>
+          <button onClick={() => setTab('finances')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'finances' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
+            <Wallet className="w-5 h-5" /> Finances & Comptabilité
           </button>
           <button onClick={() => setTab('users')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'users' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
             <Users className="w-5 h-5" /> Utilisateurs
@@ -107,9 +166,6 @@ export default function AdminHome() {
           </button>
           <button onClick={() => setTab('settings')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'settings' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
             <Settings className="w-5 h-5" /> Paramètres Globaux
-          </button>
-          <button onClick={() => setTab('loans')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'loans' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
-            <CreditCard className="w-5 h-5" /> Micro-crédits
           </button>
         </nav>
 
@@ -135,8 +191,119 @@ export default function AdminHome() {
               </div>
               <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
                 <div className="w-14 h-14 rounded-xl bg-purple-50 flex items-center justify-center text-purple-500"><TrendingUp className="w-7 h-7" /></div>
-                <div><p className="text-gray-500 text-sm font-semibold">Revenus Plateforme</p><p className="text-2xl font-bold">{formatFcfa(stats.totalRevenue)}</p></div>
+                <div><p className="text-gray-500 text-sm font-semibold">Revenus (Commissions)</p><p className="text-2xl font-bold text-noordrive-green">{formatFcfa(stats.totalRevenue)}</p></div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {tab === 'finances' && (
+          <div>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-3xl font-bold text-gray-800">Livre de Comptes</h2>
+              <div className="flex items-center gap-4">
+                <label className="cursor-pointer bg-white border border-gray-200 text-gray-700 font-bold py-2 px-4 rounded-xl flex items-center gap-2 hover:bg-gray-50">
+                  <Upload className="w-4 h-4"/> Importer Rechargements (CSV)
+                  <input type="file" accept=".csv" className="hidden" onChange={handleFileUpload} />
+                </label>
+                <button onClick={() => downloadCSV('transactions')} className="bg-gray-800 text-white font-bold py-2 px-4 rounded-xl flex items-center gap-2 hover:bg-gray-900">
+                  <Download className="w-4 h-4"/> Exporter CSV
+                </button>
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <table className="w-full text-left">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    <th className="p-4 font-semibold text-gray-600">Date</th>
+                    <th className="p-4 font-semibold text-gray-600">Utilisateur</th>
+                    <th className="p-4 font-semibold text-gray-600">Type</th>
+                    <th className="p-4 font-semibold text-gray-600">Méthode</th>
+                    <th className="p-4 font-semibold text-gray-600 text-right">Montant</th>
+                    <th className="p-4 font-semibold text-gray-600">Description</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y text-sm">
+                  {transactions.map((t: any) => (
+                    <tr key={t.id} className="hover:bg-gray-50">
+                      <td className="p-4 text-gray-500">{new Date(t.createdAt).toLocaleString()}</td>
+                      <td className="p-4 font-medium">{t.user.name} <span className="text-gray-400 text-xs">({t.user.phone})</span></td>
+                      <td className="p-4 uppercase text-xs font-bold text-gray-500">{t.type}</td>
+                      <td className="p-4">{t.method}</td>
+                      <td className={`p-4 text-right font-bold ${t.amount > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                        {t.amount > 0 ? '+' : ''}{formatFcfa(t.amount)}
+                      </td>
+                      <td className="p-4 text-gray-500">{t.description}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {tab === 'users' && (
+          <div>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-3xl font-bold text-gray-800">Utilisateurs inscrits</h2>
+              <button onClick={() => downloadCSV('users')} className="bg-gray-800 text-white font-bold py-2 px-4 rounded-xl flex items-center gap-2 hover:bg-gray-900">
+                <Download className="w-4 h-4"/> Exporter CSV
+              </button>
+            </div>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <table className="w-full text-left">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    <th className="p-4 font-semibold text-gray-600">Nom</th>
+                    <th className="p-4 font-semibold text-gray-600">Téléphone</th>
+                    <th className="p-4 font-semibold text-gray-600">Rôle</th>
+                    <th className="p-4 font-semibold text-gray-600">Portefeuille</th>
+                    <th className="p-4 font-semibold text-gray-600">Statut (Chauffeur)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y text-sm">
+                  {usersList.map((u: any) => (
+                    <tr key={u.id} className="hover:bg-gray-50 group">
+                      <td className="p-4 font-medium">{u.name}</td>
+                      <td className="p-4 text-gray-500">{u.phone}</td>
+                      <td className="p-4 capitalize">
+                        <span className={`px-2 py-1 rounded text-xs font-bold ${u.role === 'chauffeur' ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-700'}`}>{u.role}</span>
+                      </td>
+                      <td className="p-4">
+                        {editingUserId === u.id ? (
+                          <div className="flex items-center gap-2">
+                            <input type="number" value={editAmount} onChange={e => setEditAmount(Number(e.target.value))} className="w-24 border p-1 rounded" placeholder="Montant" />
+                            <button onClick={() => handleAdjustWallet(u.id)} className="bg-noordrive-green text-white px-2 py-1 rounded font-bold text-xs">OK</button>
+                            <button onClick={() => setEditingUserId(null)} className="text-gray-400">X</button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold">{formatFcfa(u.walletBalance)}</span>
+                            <button onClick={() => setEditingUserId(u.id)} className="text-gray-400 hover:text-blue-500 opacity-0 group-hover:opacity-100 transition"><Edit3 className="w-4 h-4"/></button>
+                          </div>
+                        )}
+                      </td>
+                      <td className="p-4">
+                        {u.role === 'chauffeur' ? (
+                          <div className="flex items-center gap-3">
+                            <span className={`px-2 py-1 rounded text-xs font-bold ${u.accountStatus === 'APPROVED' ? 'bg-green-100 text-green-700' : u.accountStatus === 'REJECTED' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                              {u.accountStatus}
+                            </span>
+                            <button 
+                              onClick={() => toggleUserStatus(u.id, u.accountStatus)}
+                              className={`text-xs font-bold px-3 py-1 rounded transition ${u.accountStatus === 'APPROVED' ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-green-50 text-green-600 hover:bg-green-100'}`}
+                            >
+                              {u.accountStatus === 'APPROVED' ? 'Bloquer' : 'Approuver'}
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
@@ -184,57 +351,6 @@ export default function AdminHome() {
                         >
                           <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${t.isActive ? 'translate-x-6' : 'translate-x-1'}`} />
                         </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {tab === 'users' && (
-          <div>
-            <h2 className="text-3xl font-bold mb-8 text-gray-800">Utilisateurs inscrits</h2>
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              <table className="w-full text-left">
-                <thead className="bg-gray-50 border-b">
-                  <tr>
-                    <th className="p-4 font-semibold text-gray-600">Nom</th>
-                    <th className="p-4 font-semibold text-gray-600">Téléphone</th>
-                    <th className="p-4 font-semibold text-gray-600">Rôle</th>
-                    <th className="p-4 font-semibold text-gray-600">Portefeuille</th>
-                    <th className="p-4 font-semibold text-gray-600">Statut</th>
-                    <th className="p-4 font-semibold text-gray-600">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {usersList.map((u: any) => (
-                    <tr key={u.id} className="hover:bg-gray-50">
-                      <td className="p-4 font-medium">{u.name}</td>
-                      <td className="p-4 text-gray-500">{u.phone}</td>
-                      <td className="p-4 capitalize">
-                        <span className={`px-2 py-1 rounded text-xs font-bold ${u.role === 'chauffeur' ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-700'}`}>{u.role}</span>
-                      </td>
-                      <td className="p-4 font-bold">{formatFcfa(u.walletBalance)}</td>
-                      <td className="p-4">
-                        {u.role === 'chauffeur' ? (
-                          <span className={`px-2 py-1 rounded text-xs font-bold ${u.accountStatus === 'APPROVED' ? 'bg-green-100 text-green-700' : u.accountStatus === 'REJECTED' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                            {u.accountStatus}
-                          </span>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </td>
-                      <td className="p-4">
-                        {u.role === 'chauffeur' && (
-                          <button 
-                            onClick={() => toggleUserStatus(u.id, u.accountStatus)}
-                            className={`text-xs font-bold px-3 py-1.5 rounded-lg transition ${u.accountStatus === 'APPROVED' ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-green-50 text-green-600 hover:bg-green-100'}`}
-                          >
-                            {u.accountStatus === 'APPROVED' ? 'Bloquer' : 'Approuver'}
-                          </button>
-                        )}
                       </td>
                     </tr>
                   ))}
@@ -303,15 +419,6 @@ export default function AdminHome() {
                 </button>
               </div>
 
-            </div>
-          </div>
-        )}
-
-        {tab === 'loans' && (
-          <div>
-            <h2 className="text-3xl font-bold mb-8 text-gray-800">Demandes de Micro-crédit</h2>
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center text-gray-500 py-20">
-              Fonctionnalité en cours d'intégration.
             </div>
           </div>
         )}
