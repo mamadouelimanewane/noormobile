@@ -5,6 +5,8 @@ import { useStore } from '../../store/useStore';
 import TrackingPanel from '../../components/TrackingPanel';
 import MapView from '../../components/MapView';
 import { formatFcfa } from '../../lib/geo';
+import { Mic } from 'lucide-react';
+import { useSpeechToText } from '../../hooks/useSpeechToText';
 import type { Driver, ServiceRequest } from '../../types';
 
 const TYPE_LABEL: Record<string, string> = { ride: 'Course', delivery: 'Livraison', intercity: 'Ville à ville' };
@@ -155,6 +157,7 @@ function RevenusTab() {
 
 function DemandesTab({ requests, driverId }: { requests: ServiceRequest[]; driverId: string }) {
   const driverMakeOffer = useStore((s) => s.driverMakeOffer);
+  const { isListening, isSupported, startListening, stopListening } = useSpeechToText();
 
   if (requests.length === 0) return <p className="text-center text-gray-400 py-10 text-sm">Aucune demande disponible pour le moment.</p>;
 
@@ -192,12 +195,24 @@ function DemandesTab({ requests, driverId }: { requests: ServiceRequest[]; drive
             >
               +500
             </button>
-            <button
-              onClick={() => driverMakeOffer(r.id, driverId, r.proposedPrice + 1000, 5)}
-              className="flex-1 bg-gray-100 text-gray-700 text-sm font-bold py-2.5 rounded-xl border hover:bg-gray-200 transition"
-            >
-              +1000
-            </button>
+            {isSupported ? (
+              <button
+                onClick={() => {
+                  if (isListening) stopListening();
+                  else startListening((amount) => driverMakeOffer(r.id, driverId, amount, 5));
+                }}
+                className={`flex-1 flex justify-center items-center py-2.5 rounded-xl border transition ${isListening ? 'bg-red-500 text-white animate-pulse border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+              >
+                <Mic className={`w-5 h-5 ${isListening ? 'animate-bounce' : ''}`} />
+              </button>
+            ) : (
+              <button
+                onClick={() => driverMakeOffer(r.id, driverId, r.proposedPrice + 1000, 5)}
+                className="flex-1 bg-gray-100 text-gray-700 text-sm font-bold py-2.5 rounded-xl border hover:bg-gray-200 transition"
+              >
+                +1000
+              </button>
+            )}
           </div>
         </motion.div>
       ))}
