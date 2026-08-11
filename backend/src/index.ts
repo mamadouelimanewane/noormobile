@@ -190,9 +190,53 @@ app.get('/api/admin/users', async (req, res) => {
   try {
     const users = await prisma.user.findMany({
       orderBy: { createdAt: 'desc' },
-      include: { vehicle: true }
+      include: { vehicle: true, documents: true }
     });
     res.json(users);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/admin/users/:id', async (req, res) => {
+  try {
+    const { name, phone, vehicleData } = req.body;
+    
+    let updateData: any = { name, phone };
+    
+    // If it's a driver and vehicle data is passed
+    if (vehicleData) {
+      updateData.vehicle = {
+        upsert: {
+          create: vehicleData,
+          update: vehicleData
+        }
+      };
+    }
+
+    const user = await prisma.user.update({
+      where: { id: req.params.id },
+      data: updateData,
+      include: { vehicle: true, documents: true }
+    });
+    res.json(user);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/admin/users/:id', async (req, res) => {
+  try {
+    // Delete related vehicle if it exists
+    await prisma.vehicle.deleteMany({ where: { driverId: req.params.id } });
+    await prisma.driverDocument.deleteMany({ where: { driverId: req.params.id } });
+    await prisma.transaction.deleteMany({ where: { userId: req.params.id } });
+    await prisma.serviceRequest.deleteMany({ where: { passengerId: req.params.id } });
+    
+    const user = await prisma.user.delete({
+      where: { id: req.params.id }
+    });
+    res.json(user);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
