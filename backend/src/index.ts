@@ -110,6 +110,72 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+// --- WALLET APIS ---
+app.get('/api/wallet/history/:userId', async (req, res) => {
+  try {
+    const transactions = await prisma.transaction.findMany({
+      where: { userId: req.params.userId },
+      orderBy: { createdAt: 'desc' }
+    });
+    const user = await prisma.user.findUnique({ where: { id: req.params.userId }, select: { walletBalance: true }});
+    res.json({ balance: user?.walletBalance || 0, transactions });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/wallet/topup', async (req, res) => {
+  try {
+    const { userId, amount, method } = req.body;
+    if(amount <= 0) return res.status(400).json({error: 'Invalid amount'});
+    
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { walletBalance: { increment: amount } }
+    });
+    
+    await prisma.transaction.create({
+      data: {
+        userId, type: 'topup', amount, method: method || 'mobile_money',
+        status: 'completed', reference: `TOPUP-${Date.now()}`, description: `Rechargement via ${method || 'Mobile Money'}`
+      }
+    });
+    res.json({ ok: true, balance: user.walletBalance });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/wallet/cashout', async (req, res) => {
+  try {
+    const { userId, amount, method, phone } = req.body;
+    const settings = await prisma.platformSettings.findUnique({ where: { id: 'default' } });
+    const feeRate = settings?.withdrawalFee || 0.01;
+    
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || user.walletBalance < amount) return res.status(400).json({ error: 'Fonds insuffisants' });
+    
+    const feeAmount = Math.round(amount * feeRate);
+    const netAmount = amount - feeAmount;
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { walletBalance: { decrement: amount } }
+    });
+    
+    await prisma.transaction.create({
+      data: {
+        userId, type: 'cashout', amount: -amount, method: method || 'mobile_money',
+        status: 'pending', reference: `CASH-${Date.now()}`, description: `Retrait vers ${phone} (Frais: ${feeAmount} FCFA)`
+      }
+    });
+    res.json({ ok: true, balance: updatedUser.walletBalance });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+// --------------------
+
 // --- COVOITURAGE INTERURBAIN APIS ---
 app.get('/api/carpool/trips', async (req, res) => {
   try {
