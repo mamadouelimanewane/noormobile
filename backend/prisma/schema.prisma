@@ -147,6 +147,10 @@ model PlatformSettings {
   taxRate              Float  @default(0.18)
   referralBonusSponsor Float  @default(1000)
   referralBonusReferee Float  @default(500)
+  baseFare             Float  @default(1000)
+  perKmRate            Float  @default(200)
+  withdrawalFee        Float  @default(0.01)
+  maxLoanAmount        Float  @default(100000)
 }
 
 model DriverDocument {

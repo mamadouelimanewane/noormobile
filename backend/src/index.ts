@@ -125,17 +125,47 @@ app.get('/api/admin/settings', async (req, res) => {
 
 app.post('/api/admin/settings', async (req, res) => {
   try {
-    const { commissionRate, referralBonusSponsor, referralBonusReferee } = req.body;
+    const { commissionRate, referralBonusSponsor, referralBonusReferee, baseFare, perKmRate, withdrawalFee, maxLoanAmount } = req.body;
     const settings = await prisma.platformSettings.upsert({
       where: { id: 'default' },
-      update: { commissionRate, referralBonusSponsor, referralBonusReferee },
-      create: { id: 'default', commissionRate, referralBonusSponsor, referralBonusReferee }
+      update: { commissionRate, referralBonusSponsor, referralBonusReferee, baseFare, perKmRate, withdrawalFee, maxLoanAmount },
+      create: { id: 'default', commissionRate, referralBonusSponsor, referralBonusReferee, baseFare, perKmRate, withdrawalFee, maxLoanAmount }
     });
     res.json(settings);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
+app.get('/api/admin/stats', async (req, res) => {
+  try {
+    const totalUsers = await prisma.user.count();
+    const totalRides = await prisma.serviceRequest.count({ where: { status: 'termine' } });
+    const commissionData = await prisma.transaction.aggregate({
+      where: { type: 'commission', status: 'completed' },
+      _sum: { amount: true }
+    });
+    res.json({
+      totalUsers,
+      totalRides,
+      totalRevenue: commissionData._sum.amount || 0
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/admin/users', async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { vehicle: true }
+    });
+    res.json(users);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/admin/pending-drivers', async (req, res) => {
   try {
     const users = await prisma.user.findMany({ where: { role: 'chauffeur', accountStatus: 'PENDING' }, include: { vehicle: true } });
