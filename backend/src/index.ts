@@ -272,6 +272,37 @@ io.on('connection', (socket) => {
     io.emit('ride:cancelled', formattedReq);
   });
 
+  socket.on('ride:status', async (data) => {
+    const req = await prisma.serviceRequest.update({
+      where: { id: data.requestId },
+      data: { status: data.status } // 'en_cours' or 'termine'
+    });
+    
+    // For payments on completion
+    if (data.status === 'termine' && req.driverId) {
+      const commission = Math.round(req.proposedPrice * 0.12);
+      const net = req.proposedPrice - commission;
+      
+      // Debit passenger
+      await prisma.user.update({ where: { id: req.passengerId }, data: { walletBalance: { decrement: req.proposedPrice } } });
+      // Credit driver
+      await prisma.user.update({ where: { id: req.driverId }, data: { walletBalance: { increment: net } } });
+      
+      await prisma.transaction.create({
+        data: { userId: req.passengerId, type: 'payment', amount: -req.proposedPrice, method: 'wave', status: 'completed', reference: req.id, description: `Paiement course` }
+      });
+      await prisma.transaction.create({
+        data: { userId: req.driverId, type: 'payment', amount: req.proposedPrice, method: 'cash', status: 'completed', reference: req.id, description: `Gain course` }
+      });
+      await prisma.transaction.create({
+        data: { userId: req.driverId, type: 'commission', amount: -commission, method: 'cash', status: 'completed', reference: req.id, description: `Commission plateforme` }
+      });
+    }
+
+    const formattedReq = { ...req, createdAt: req.createdAt.getTime(), updatedAt: req.updatedAt.getTime() };
+    io.emit('ride:updated', formattedReq);
+  });
+
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
   });

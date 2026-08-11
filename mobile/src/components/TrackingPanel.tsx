@@ -14,6 +14,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 export default function TrackingPanel({ request, viewerRole }: { request: ServiceRequest; viewerRole: 'passager' | 'chauffeur' }) {
   const rateRequest = useStore((s) => s.rateRequest);
+  const updateRideStatus = useStore((s) => s.updateRideStatus);
   const [stars, setStars] = useState(5);
   const [isPaid, setIsPaid] = useState(false);
   const alreadyRated = viewerRole === 'passager' ? request.ratingDriver : request.ratingPassenger;
@@ -30,6 +31,24 @@ export default function TrackingPanel({ request, viewerRole }: { request: Servic
             {request.pickup.label} → {request.dropoff.label}
           </div>
         </div>
+
+        {viewerRole === 'chauffeur' && request.status === 'attribue' && (
+          <button 
+            onClick={() => updateRideStatus(request.id, 'en_cours')} 
+            className="w-full bg-noordrive-black text-white font-bold py-3 rounded-xl"
+          >
+            Client récupéré (Démarrer la course)
+          </button>
+        )}
+
+        {viewerRole === 'chauffeur' && request.status === 'en_cours' && (
+          <button 
+            onClick={() => updateRideStatus(request.id, 'termine')} 
+            className="w-full bg-noordrive-green text-white font-bold py-3 rounded-xl"
+          >
+            Course terminée
+          </button>
+        )}
 
         {request.status === 'termine' && !alreadyRated && viewerRole === 'passager' && !isPaid && (
           <div className="bg-white border rounded-xl p-4 text-center space-y-4">

@@ -7,7 +7,6 @@ import type {
   User,
   ServiceRequest,
   ServiceType,
-  Offer,
   GeoPoint,
   ChatMessage,
   LoanRequest,
@@ -19,7 +18,6 @@ import type {
   PlatformSettings,
   PaymentMethod,
 } from '../types';
-import { formatFcfa } from '../lib/geo';
 
 const AVATAR_COLORS = ['#0a8f4c', '#f5b301', '#2563eb', '#e33', '#7c3aed', '#0891b2'];
 
@@ -53,7 +51,7 @@ interface StoreState {
   driverMakeOffer: (requestId: string, driverId: string, price: number, etaMin: number) => void;
   acceptOffer: (requestId: string, offerId: string) => void;
   cancelRequest: (requestId: string) => void;
-  tick: () => void;
+  updateRideStatus: (requestId: string, status: 'en_cours' | 'termine') => void;
   sendMessage: (requestId: string, text: string) => void;
   rateRequest: (requestId: string, stars: number, target: 'driver' | 'passenger') => void;
   driverSetOnline: (driverId: string, isOnline: boolean) => void;
@@ -128,6 +126,11 @@ export const useStore = create<StoreState>()(
         socket.off('ride:cancelled').on('ride:cancelled', (req) => {
           set((s) => ({
             requests: s.requests.map((r) => (r.id === req.id ? { ...r, status: 'annule', updatedAt: Date.now() } : r)),
+          }));
+        });
+        socket.off('ride:updated').on('ride:updated', (req) => {
+          set((s) => ({
+            requests: s.requests.map((r) => (r.id === req.id ? { ...r, status: req.status, updatedAt: req.updatedAt } : r)),
           }));
         });
         socket.off('driver:moved').on('driver:moved', (data) => {
@@ -232,72 +235,8 @@ export const useStore = create<StoreState>()(
         socket.emit('ride:cancel', { requestId });
       },
 
-      tick: () => {
-        set((s) => {
-          let changed = false;
-          const requests = s.requests.map((r) => {
-            if (r.status !== 'attribue' && r.status !== 'en_cours') return r;
-            if (!r.driverPosition || !r.driverId) return r;
-            changed = true;
-            const target = r.status === 'attribue' ? r.pickup : r.dropoff;
-            const dist = distanceKm(r.driverPosition, target);
-            const step = Math.min(1, 0.35 / Math.max(dist, 0.05));
-            const newPos = moveToward(r.driverPosition, target, step);
-            if (isClose(newPos, target)) {
-              if (r.status === 'attribue') {
-                return { ...r, driverPosition: r.pickup, status: 'en_cours' as const, updatedAt: Date.now() };
-              }
-              return { ...r, driverPosition: r.dropoff, status: 'termine' as const, updatedAt: Date.now() };
-            }
-            return { ...r, driverPosition: newPos };
-          });
-
-          if (!changed) return s;
-
-          // settle payment when a request just completed this tick
-          const drivers = { ...s.drivers };
-          const passengers = { ...s.passengers };
-          const newTransactions = [...s.transactions];
-          const settings = s.settings;
-
-          requests.forEach((r, i) => {
-            const prev = s.requests[i];
-            if (prev?.status === 'en_cours' && r.status === 'termine' && r.driverId) {
-              const driver = drivers[r.driverId];
-              const passenger = passengers[r.passengerId];
-              
-              if (driver && passenger) {
-                const commission = Math.round(r.proposedPrice * settings.commissionRate);
-                const tax = Math.round(r.proposedPrice * settings.taxRate);
-                const net = r.proposedPrice - commission;
-
-                drivers[r.driverId] = { ...driver, walletBalance: driver.walletBalance + net };
-                passengers[r.passengerId] = { ...passenger, walletBalance: passenger.walletBalance - r.proposedPrice };
-
-                // Transaction pour le passager (paiement)
-                newTransactions.unshift({
-                  id: uid('tx'), userId: r.passengerId, userRole: 'passager', type: 'payment',
-                  amount: -r.proposedPrice, method: 'wave', status: 'completed', reference: r.id,
-                  createdAt: Date.now(), description: `Paiement course ${r.pickup.label} -> ${r.dropoff.label}`, requestId: r.id
-                });
-                // Transaction pour le chauffeur (gain)
-                newTransactions.unshift({
-                  id: uid('tx'), userId: r.driverId, userRole: 'chauffeur', type: 'payment',
-                  amount: r.proposedPrice, method: 'cash', status: 'completed', reference: r.id,
-                  createdAt: Date.now(), description: `Gain course ${r.pickup.label} -> ${r.dropoff.label}`, requestId: r.id
-                });
-                // Transaction pour la commission plateforme
-                newTransactions.unshift({
-                  id: uid('tx'), userId: r.driverId, userRole: 'chauffeur', type: 'commission',
-                  amount: -commission, method: 'cash', status: 'completed', reference: r.id,
-                  createdAt: Date.now(), description: `Commission plateforme (${settings.commissionRate * 100}%)`, requestId: r.id
-                });
-              }
-            }
-          });
-
-          return { requests, drivers, passengers, transactions: newTransactions };
-        });
+      updateRideStatus: (requestId, status) => {
+        socket.emit('ride:status', { requestId, status });
       },
 
       sendMessage: (requestId, text) => {

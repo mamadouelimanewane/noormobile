@@ -25,7 +25,6 @@ export default function Auth() {
   const [error, setError] = useState('');
 
   const currentUser = useStore((s) => s.currentUser);
-  const setCurrentUser = useStore((s: any) => s.setCurrentUser || s.login); // fallback during transition
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -41,7 +40,7 @@ export default function Auth() {
         api.post('/auth/login', { phone: autoPhone, role: initialRole })
           .then(res => {
             if (res.data.ok) {
-              if (useStore.getState().setCurrentUser) {
+              if ('setCurrentUser' in useStore.getState()) {
                 (useStore.getState() as any).setCurrentUser(res.data.user);
               } else {
                 (useStore.getState() as any).login(autoPhone, initialRole);
@@ -58,7 +57,7 @@ export default function Auth() {
     setError('');
 
     if (role === 'admin') {
-      if (useStore.getState().setCurrentUser) {
+      if ('setCurrentUser' in useStore.getState()) {
         (useStore.getState() as any).setCurrentUser({ id: 'admin', role: 'admin', name: 'Admin', phone: 'admin' });
       } else {
         (useStore.getState() as any).login('admin', 'admin');
@@ -74,7 +73,7 @@ export default function Auth() {
       
       const res = await api.post('/auth/login', payload);
       if (res.data.ok) {
-        if (useStore.getState().setCurrentUser) {
+        if ('setCurrentUser' in useStore.getState()) {
           (useStore.getState() as any).setCurrentUser(res.data.user);
         } else {
           mode === 'connexion' ? (useStore.getState() as any).login(phone, role) : (useStore.getState() as any).register(name, phone, role, payload.vehicle);

@@ -68,7 +68,7 @@ export default function MapView({ pickup, dropoff, driverPosition, nearbyCars, c
     }
     async function fetchRoute() {
       try {
-        const res = await fetch(`https://us1.locationiq.com/v1/directions/driving/${origin.lng},${origin.lat};${dest.lng},${dest.lat}?key=pk.ef8f3d80db02a286ae4b6fae736af632&geometries=geojson`);
+        const res = await fetch(`https://us1.locationiq.com/v1/directions/driving/${origin!.lng},${origin!.lat};${dest!.lng},${dest!.lat}?key=pk.ef8f3d80db02a286ae4b6fae736af632&geometries=geojson`);
         if (res.ok) {
           const data = await res.json();
           if (data.routes?.[0]?.geometry?.coordinates) {
