@@ -3,7 +3,7 @@ import axios from 'axios';
 import { UserCheck, CheckCircle, XCircle, FileText } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const API_URL = 'http://localhost:3001/api';
+const API_URL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : 'http://localhost:3001/api';
 
 export default function DriverValidation() {
   const [pendingDrivers, setPendingDrivers] = useState<any[]>([]);
