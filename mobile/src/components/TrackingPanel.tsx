@@ -19,7 +19,13 @@ const DELIVERY_STATUS_LABEL: Record<string, string> = {
   termine: 'Colis livré',
 };
 
-export default function TrackingPanel({ request, viewerRole }: { request: ServiceRequest; viewerRole: 'passager' | 'chauffeur' }) {
+const INTERCITY_STATUS_LABEL: Record<string, string> = {
+  attribue: 'En route vers le point de rendez-vous',
+  en_cours: 'Trajet interurbain en cours',
+  termine: 'Arrivé à destination',
+};
+
+export default function TrackingPanel({ request, viewerRole, hideMap }: { request: ServiceRequest; viewerRole: 'passager' | 'chauffeur', hideMap?: boolean }) {
   const rateRequest = useStore((s) => s.rateRequest);
   const updateRideStatus = useStore((s) => s.updateRideStatus);
   const cancelRequest = useStore((s) => s.cancelRequest);
@@ -28,7 +34,7 @@ export default function TrackingPanel({ request, viewerRole }: { request: Servic
   const alreadyRated = viewerRole === 'passager' ? request.ratingDriver : request.ratingPassenger;
 
   return (
-    <div className="grid md:grid-cols-2 gap-4">
+    <div className={hideMap ? "" : "grid md:grid-cols-2 gap-4"}>
       <motion.div 
         initial={{ y: '100%' }} 
         animate={{ y: 0 }} 
@@ -41,6 +47,8 @@ export default function TrackingPanel({ request, viewerRole }: { request: Servic
             <span className="font-semibold">
               {request.type === 'delivery'
                 ? DELIVERY_STATUS_LABEL[request.status] ?? request.status
+                : request.type === 'intercity'
+                ? INTERCITY_STATUS_LABEL[request.status] ?? request.status
                 : STATUS_LABEL[request.status] ?? request.status}
             </span>
             <span className="font-bold text-noordrive-green">{formatFcfa(request.proposedPrice)}</span>
@@ -107,6 +115,20 @@ export default function TrackingPanel({ request, viewerRole }: { request: Servic
           </div>
         )}
 
+        {request.type === 'intercity' && request.intercityInfo && (
+          <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 space-y-2">
+            <h4 className="font-bold text-purple-900">Covoiturage {request.intercityInfo.villeDepart} → {request.intercityInfo.villeArrivee}</h4>
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-purple-800 text-sm font-medium">Date de départ</span>
+              <span className="text-purple-900 font-bold">{request.intercityInfo.dateDepart}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-purple-800 text-sm font-medium">Places réservées</span>
+              <span className="text-purple-900 font-bold">{request.intercityInfo.places}</span>
+            </div>
+          </div>
+        )}
+
         {viewerRole === 'chauffeur' && request.status === 'en_cours' && (
           <button 
             onClick={() => updateRideStatus(request.id, 'termine')} 
@@ -164,15 +186,17 @@ export default function TrackingPanel({ request, viewerRole }: { request: Servic
 
         <ChatBox requestId={request.id} />
       </motion.div>
-      <div className="h-72 md:h-full min-h-72">
-        <MapView 
-          pickup={request.pickup} 
-          dropoff={request.dropoff} 
-          driverPosition={request.driverPosition} 
-          routeOrigin={request.status === 'attribue' && request.driverPosition ? request.driverPosition : request.pickup}
-          routeDestination={request.status === 'attribue' ? request.pickup : request.dropoff}
-        />
-      </div>
+      {!hideMap && (
+        <div className="h-72 md:h-full min-h-72">
+          <MapView 
+            pickup={request.pickup} 
+            dropoff={request.dropoff} 
+            driverPosition={request.driverPosition} 
+            routeOrigin={request.status === 'attribue' && request.driverPosition ? request.driverPosition : request.pickup}
+            routeDestination={request.status === 'attribue' ? request.pickup : request.dropoff}
+          />
+        </div>
+      )}
     </div>
   );
 }

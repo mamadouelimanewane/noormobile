@@ -18,20 +18,28 @@ export default function ChauffeurHome() {
   const requests = useStore((s) => s.requests);
   const driverSetOnline = useStore((s) => s.driverSetOnline);
 
-  const myActive = requests.find(
+  const myActives = requests.filter(
     (r) =>
       r.driverId === driver.id &&
       r.status !== 'annule' &&
-      (r.status !== 'termine' || !r.ratingPassenger),
+      (r.status !== 'termine' || !r.ratingPassenger)
   );
+
+  const isPrivateRide = myActives.length > 0 && myActives[0].type !== 'intercity';
+  const isIntercityRide = myActives.length > 0 && myActives[0].type === 'intercity';
+  const intercityDestination = isIntercityRide ? myActives[0].intercityInfo?.villeArrivee : null;
 
   const available = requests.filter(
     (r) =>
       (r.status === 'recherche' || r.status === 'negociation') &&
-      !r.offers.some((o) => o.driverId === driver.id),
+      !r.offers.some((o) => o.driverId === driver.id) &&
+      (!isIntercityRide || (r.type === 'intercity' && r.intercityInfo?.villeArrivee === intercityDestination))
   );
 
-  if (myActive) {
+  const [showIntercityModal, setShowIntercityModal] = useState(false);
+
+  if (isPrivateRide) {
+    const myActive = myActives[0];
     return (
       <Layout activeTab={tab} onTabChange={setTab}>
         <div className="absolute inset-0 z-0 flex flex-col justify-end">
@@ -92,7 +100,46 @@ export default function ChauffeurHome() {
       <div className="absolute inset-0 z-0">
         <MapView driverPosition={driver.position} />
       </div>
-      <div className="absolute top-20 left-1/2 -translate-x-1/2 z-10 bg-noordrive-black text-white px-6 py-2 rounded-full shadow-lg font-bold flex items-center gap-2">
+      
+      {isIntercityRide && (
+        <div className="absolute top-20 left-4 right-4 z-20 max-w-md mx-auto">
+          <button 
+            onClick={() => setShowIntercityModal(true)}
+            className="w-full bg-blue-600 hover:bg-blue-700 transition text-white font-bold py-3 px-4 rounded-xl shadow-lg flex items-center justify-between"
+          >
+            <span>🚗 Covoiturage vers {intercityDestination}</span>
+            <span className="bg-white text-blue-600 px-3 py-1 rounded-full text-sm">{myActives.length} Passager(s)</span>
+          </button>
+        </div>
+      )}
+
+      {showIntercityModal && (
+        <div className="absolute inset-0 z-50 bg-black/60 flex flex-col justify-end">
+          <motion.div 
+            initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+            className="bg-gray-100 rounded-t-3xl p-4 h-[85vh] overflow-y-auto w-full max-w-xl mx-auto shadow-2xl"
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Mes Passagers ({myActives.length})</h2>
+              <button onClick={() => setShowIntercityModal(false)} className="bg-white rounded-full py-1.5 text-sm font-bold shadow-sm px-4">Fermer</button>
+            </div>
+            <div className="space-y-4 pb-10">
+              {myActives.map(req => (
+                <div key={req.id} className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200">
+                  <div className="p-3 border-b bg-gray-50 font-medium text-sm flex justify-between items-center">
+                    <span>{req.passengerName || "Passager"}</span>
+                  </div>
+                  <div className="p-2">
+                    <TrackingPanel request={req} viewerRole="chauffeur" hideMap={true} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      <div className={`absolute ${isIntercityRide ? 'top-36' : 'top-20'} left-1/2 -translate-x-1/2 z-10 bg-noordrive-black text-white px-6 py-2 rounded-full shadow-lg font-bold flex items-center gap-2 transition-all`}>
         <span className="w-2 h-2 bg-noordrive-green rounded-full animate-pulse" /> En ligne
       </div>
       <div className="absolute bottom-6 left-0 right-0 z-10 pointer-events-none px-4">
