@@ -13,6 +13,8 @@ import Wallet from '../../components/Wallet';
 import DriverCarpool from '../../components/DriverCarpool';
 import MicroCredit from '../../components/MicroCredit';
 import Support from '../../components/Support';
+import { api } from '../../lib/api';
+import toast from 'react-hot-toast';
 
 const TYPE_LABEL: Record<string, string> = { ride: 'Course', delivery: 'Livraison', intercity: 'Ville à ville' };
 
@@ -104,6 +106,7 @@ export default function ChauffeurHome() {
           {tab === 'revenus' && <RevenusTab />}
           {tab === 'portefeuille' && <Wallet />}
           {tab === 'microcredit' && <MicroCredit />}
+          {tab === 'tontine' && <TontineTab driver={driver} />}
           {tab === 'covoiturage' && <DriverCarpool />}
           {tab === 'support' && <Support />}
           {tab === 'parrainage' && <ParrainageTab />}
@@ -173,6 +176,82 @@ export default function ChauffeurHome() {
         </div>
       </div>
     </Layout>
+  );
+}
+
+function TontineTab({ driver }: { driver: any }) {
+  const [tontines, setTontines] = useState<any[]>([]);
+  
+  useEffect(() => {
+    fetchTontines();
+  }, []);
+
+  const fetchTontines = async () => {
+    try {
+      const res = await api.get('/tontine/groups');
+      setTontines(res.data);
+    } catch(e) {}
+  };
+
+  const joinTontine = async (groupId: string) => {
+    try {
+      await api.post('/tontine/join', { userId: driver.id, groupId });
+      toast.success('Vous avez rejoint la tontine avec succès !');
+      fetchTontines();
+    } catch(e: any) {
+      toast.error(e.response?.data?.error || 'Erreur lors de la jonction');
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="p-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+        <h3 className="font-bold">Tontines (Nat) Disponibles</h3>
+      </div>
+      <div className="p-4 space-y-4">
+        {tontines.filter(t => t.status === 'OPEN').length === 0 && <p className="text-gray-500 text-sm text-center">Aucune tontine ouverte pour le moment.</p>}
+        {tontines.filter(t => t.status === 'OPEN').map(t => (
+          <div key={t.id} className="p-4 border rounded-xl shadow-sm flex items-center justify-between">
+            <div>
+              <h4 className="font-bold">{t.name}</h4>
+              <p className="text-sm text-gray-500">{t.amountPerPeriod} FCFA / {t.frequency}</p>
+              <p className="text-xs text-gray-400 mt-1">Places: {t.members.length}/{t.maxMembers}</p>
+            </div>
+            <button 
+              onClick={() => joinTontine(t.id)}
+              className="bg-noordrive-green text-white px-4 py-2 rounded-xl text-sm font-bold"
+            >
+              Rejoindre
+            </button>
+          </div>
+        ))}
+      </div>
+      
+      <div className="p-4 bg-gray-50 border-t border-b border-gray-100 mt-4">
+        <h3 className="font-bold">Mes Tontines Actives</h3>
+      </div>
+      <div className="p-4 space-y-4">
+        {tontines.filter(t => t.members.some((m: any) => m.userId === driver.id)).map(t => {
+          const myMember = t.members.find((m: any) => m.userId === driver.id);
+          return (
+            <div key={t.id} className="p-4 border rounded-xl shadow-sm bg-green-50/50">
+              <div className="flex justify-between items-start mb-2">
+                <h4 className="font-bold text-lg">{t.name}</h4>
+                <span className="text-xs font-bold text-green-700 bg-green-100 px-2 py-1 rounded-full">{t.status}</span>
+              </div>
+              <p className="text-sm text-gray-600 mb-4">Votre tour de réception : <strong>{myMember.turnIndex}</strong> sur {t.maxMembers}</p>
+              <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                <div className="bg-noordrive-green h-2 rounded-full transition-all" style={{ width: `${(t.cagnotte / (t.amountPerPeriod * t.maxMembers)) * 100}%` }}></div>
+              </div>
+              <div className="flex justify-between text-xs text-gray-500">
+                <span>Cagnotte en cours: {t.cagnotte} F</span>
+                <span>Gain attendu: {t.amountPerPeriod * t.maxMembers} F</span>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
   );
 }
 

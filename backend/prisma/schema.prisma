@@ -48,6 +48,7 @@ model User {
   messages            ChatMessage[]
   tickets             SupportTicket[]
   ticketMessages      TicketMessage[]
+  tontineMemberships  TontineMember[]
   
   // Intercity Carpool Relations
   carpoolTrips        CarpoolTrip[]
@@ -235,4 +236,33 @@ model TicketMessage {
   text        String
   isAdmin     Boolean  @default(false)
   createdAt   DateTime @default(now())
+}
+
+// --- TONTINE (NAT) ---
+model TontineGroup {
+  id              String   @id @default(uuid())
+  name            String
+  amountPerPeriod Float
+  frequency       String   @default("DAILY") // DAILY, WEEKLY
+  maxMembers      Int
+  status          String   @default("OPEN") // OPEN, ACTIVE, COMPLETED
+  currentTurnIndex Int     @default(1)
+  cagnotte        Float    @default(0) // Accumulation
+  createdAt       DateTime @default(now())
+
+  members         TontineMember[]
+}
+
+model TontineMember {
+  id              String   @id @default(uuid())
+  user            User     @relation(fields: [userId], references: [id])
+  userId          String
+  group           TontineGroup @relation(fields: [groupId], references: [id])
+  groupId         String
+  turnIndex       Int      // Position in the cycle (1 to maxMembers)
+  totalContributed Float   @default(0)
+  hasReceivedPayout Boolean @default(false)
+  joinedAt        DateTime @default(now())
+
+  @@unique([userId, groupId])
 }

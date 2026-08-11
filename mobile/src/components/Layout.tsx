@@ -89,6 +89,9 @@ export default function Layout({ children, activeTab, onTabChange }: LayoutProps
                     <button onClick={() => { onTabChange?.('microcredit'); setMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${activeTab === 'microcredit' ? 'bg-gray-100 text-black' : 'text-gray-600 hover:bg-gray-50'}`}>
                       <Gift className="w-5 h-5 text-orange-500" /> Micro-crédit
                     </button>
+                    <button onClick={() => { onTabChange?.('tontine'); setMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${activeTab === 'tontine' ? 'bg-gray-100 text-black' : 'text-gray-600 hover:bg-gray-50'}`}>
+                      <Users className="w-5 h-5 text-purple-500" /> Tontine (Nat)
+                    </button>
                     </>
                   )}
                   <button onClick={() => { onTabChange?.('support'); setMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${activeTab === 'support' ? 'bg-gray-100 text-black' : 'text-gray-600 hover:bg-gray-50'}`}>

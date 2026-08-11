@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
-import { Settings, Users, LogOut, CheckCircle2, LayoutDashboard, CreditCard, Activity, TrendingUp, Percent, Wallet, Download, Upload, Edit3, Trash2, Eye, X, Landmark, CheckCircle, XCircle, FileSpreadsheet, BarChart2 } from 'lucide-react';
+import { Settings, Users, LogOut, CheckCircle2, LayoutDashboard, CreditCard, Activity, TrendingUp, Percent, Wallet, Download, Upload, Edit3, Trash2, Eye, X, Landmark, CheckCircle, XCircle, FileSpreadsheet, BarChart2, Users2, HelpCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatFcfa } from '../lib/geo';
 import * as XLSX from 'xlsx';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { api } from '../lib/api';
 
 export default function AdminHome() {
   const [tab, setTab] = useState('dashboard');
@@ -40,10 +41,19 @@ export default function AdminHome() {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [crmEdit, setCrmEdit] = useState(false);
   const [crmData, setCrmData] = useState<any>({});
+  const [tontines, setTontines] = useState<any[]>([]);
 
   useEffect(() => {
     fetchData();
+    fetchTontines();
   }, []);
+
+  const fetchTontines = async () => {
+    try {
+      const res = await api.get('/tontine/groups');
+      setTontines(res.data);
+    } catch(e) {}
+  };
 
   const fetchData = () => {
     import('../lib/api').then(({ api }) => {
@@ -271,6 +281,9 @@ export default function AdminHome() {
           </button>
           <button onClick={() => setTab('analytics')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'analytics' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
             <BarChart2 className="w-5 h-5" /> Analyse & Export
+          </button>
+          <button onClick={() => setTab('tontines')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'tontines' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
+            <Users2 className="w-5 h-5" /> Tontine (Nat)
           </button>
           <button onClick={() => setTab('support')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'support' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
             <HelpCircle className="w-5 h-5" /> Support Client
@@ -813,6 +826,52 @@ export default function AdminHome() {
                   </LineChart>
                 </ResponsiveContainer>
               </div>
+            </div>
+          </div>
+        )}
+
+        {tab === 'tontines' && (
+          <div className="h-full flex flex-col">
+            <h2 className="text-3xl font-bold text-gray-800 mb-8">Groupes de Tontine (Nat)</h2>
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
+              <h3 className="font-bold text-xl mb-4">Créer un nouveau groupe</h3>
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target as HTMLFormElement);
+                await api.post('/tontine/groups', Object.fromEntries(formData));
+                fetchTontines();
+              }} className="flex gap-4">
+                <input name="name" placeholder="Nom du groupe" className="flex-1 px-4 py-2 bg-gray-50 border rounded-xl" required />
+                <input name="amountPerPeriod" type="number" placeholder="Cotisation (FCFA)" className="w-48 px-4 py-2 bg-gray-50 border rounded-xl" required />
+                <select name="frequency" className="w-48 px-4 py-2 bg-gray-50 border rounded-xl">
+                  <option value="DAILY">Quotidien</option>
+                  <option value="WEEKLY">Hebdomadaire</option>
+                </select>
+                <input name="maxMembers" type="number" placeholder="Membres max" className="w-32 px-4 py-2 bg-gray-50 border rounded-xl" required />
+                <button className="bg-noordrive-green text-white px-6 py-2 rounded-xl font-bold">Créer</button>
+              </form>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-6">
+              {tontines.map(t => (
+                <div key={t.id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="font-bold text-lg">{t.name}</h3>
+                      <p className="text-gray-500">{formatFcfa(t.amountPerPeriod)} / {t.frequency === 'DAILY' ? 'Jour' : 'Semaine'}</p>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${t.status === 'OPEN' ? 'bg-blue-100 text-blue-700' : t.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>{t.status}</span>
+                  </div>
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-gray-500">Membres: {t.members.length}/{t.maxMembers}</span>
+                    <span className="text-gray-500">Tour actuel: {t.currentTurnIndex}</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-2">
+                    <div className="bg-noordrive-green h-2 rounded-full" style={{ width: `${(t.cagnotte / (t.amountPerPeriod * t.maxMembers)) * 100}%` }}></div>
+                  </div>
+                  <p className="text-xs text-right mt-1 text-gray-500">Cagnotte: {formatFcfa(t.cagnotte)}</p>
+                </div>
+              ))}
             </div>
           </div>
         )}

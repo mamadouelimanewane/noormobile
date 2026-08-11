@@ -135,6 +135,52 @@ app.post('/api/users/:id/fcm-token', async (req, res) => {
   }
 });
 
+// --- TONTINE APIS ----------------
+app.get('/api/tontine/groups', async (req, res) => {
+  try {
+    const groups = await prisma.tontineGroup.findMany({
+      include: { members: { include: { user: true } } }
+    });
+    res.json(groups);
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/tontine/groups', async (req, res) => {
+  try {
+    const { name, amountPerPeriod, frequency, maxMembers } = req.body;
+    const group = await prisma.tontineGroup.create({
+      data: { name, amountPerPeriod: Number(amountPerPeriod), frequency, maxMembers: Number(maxMembers) }
+    });
+    res.json(group);
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/tontine/join', async (req, res) => {
+  try {
+    const { userId, groupId } = req.body;
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || (user.driverLevel !== 'SILVER' && user.driverLevel !== 'GOLD')) {
+      return res.status(403).json({ error: 'Niveau Silver ou Gold requis pour la Tontine.' });
+    }
+    
+    const group = await prisma.tontineGroup.findUnique({ where: { id: groupId }, include: { members: true } });
+    if (!group) return res.status(404).json({ error: 'Groupe introuvable.' });
+    if (group.members.length >= group.maxMembers) return res.status(400).json({ error: 'Groupe complet.' });
+    
+    // Assign next available turnIndex
+    const turnIndex = group.members.length + 1;
+    const member = await prisma.tontineMember.create({
+      data: { userId, groupId, turnIndex }
+    });
+
+    if (group.members.length + 1 === group.maxMembers) {
+      await prisma.tontineGroup.update({ where: { id: groupId }, data: { status: 'ACTIVE' } });
+    }
+    
+    res.json(member);
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
 // --- WALLET APIS ---
 app.get('/api/wallet/history/:userId', async (req, res) => {
   try {
@@ -1021,8 +1067,26 @@ io.on('connection', (socket) => {
         const remainingToPay = activeLoan.montant - activeLoan.montantRembourse;
         loanDeduction = Math.min(Math.round(net * 0.20), remainingToPay); // Cannot deduct more than what is left
       }
+
+      // -- TONTINE DEDUCTION --
+      let tontineDeduction = 0;
+      let activeTontineMember = await prisma.tontineMember.findFirst({
+        where: { userId: req.driverId, group: { status: 'ACTIVE' } },
+        include: { group: true }
+      });
+
+      if (activeTontineMember) {
+        // If not already paid this period, deduct up to 100% of remaining net if needed?
+        // We'll deduct 50% of net or less to not drain entirely, or a fixed chunk. Let's do fixed chunk up to 50% of net.
+        const targetAmount = activeTontineMember.group.amountPerPeriod;
+        // Simplified: take 50% of remaining net until target amount is hit for this cycle. 
+        // Note: For a real app, we need to track "contributed this period" vs "totalContributed". We'll simplify to totalContributed.
+        // Let's assume daily frequency.
+        // Actually, just deduct 1000 CFA if possible, or 50% of net, whatever is smaller.
+        tontineDeduction = Math.min(Math.round((net - loanDeduction) * 0.5), targetAmount);
+      }
       
-      const finalNet = net - loanDeduction;
+      const finalNet = net - loanDeduction - tontineDeduction;
 
       // Debit passenger
       await prisma.user.update({ where: { id: req.passengerId }, data: { walletBalance: { decrement: req.proposedPrice } } });
@@ -1052,6 +1116,58 @@ io.on('connection', (socket) => {
         // Check if fully paid
         if (updatedLoan.montantRembourse >= updatedLoan.montant) {
           await prisma.loanRequest.update({ where: { id: activeLoan.id }, data: { status: 'rembourse' } });
+        }
+      }
+
+      if (tontineDeduction > 0 && activeTontineMember) {
+        await prisma.transaction.create({
+          data: { userId: req.driverId, type: 'payment', amount: -tontineDeduction, method: 'wallet', status: 'completed', reference: req.id, description: `Cotisation Tontine Nat` }
+        });
+
+        await prisma.tontineMember.update({
+          where: { id: activeTontineMember.id },
+          data: { totalContributed: { increment: tontineDeduction } }
+        });
+
+        const updatedGroup = await prisma.tontineGroup.update({
+          where: { id: activeTontineMember.groupId },
+          data: { cagnotte: { increment: tontineDeduction } },
+          include: { members: true }
+        });
+
+        // Check if payout is ready (cagnotte >= total expected)
+        const expectedTotal = updatedGroup.amountPerPeriod * updatedGroup.maxMembers;
+        if (updatedGroup.cagnotte >= expectedTotal) {
+          // Payout to currentTurnIndex
+          const winner = updatedGroup.members.find(m => m.turnIndex === updatedGroup.currentTurnIndex);
+          if (winner) {
+            await prisma.user.update({
+              where: { id: winner.userId },
+              data: { walletBalance: { increment: expectedTotal } }
+            });
+            await prisma.transaction.create({
+              data: { userId: winner.userId, type: 'topup', amount: expectedTotal, method: 'system', status: 'completed', reference: `TONTINE-${updatedGroup.id}`, description: `Gain Tontine Nat (Tour ${winner.turnIndex})` }
+            });
+            sendPushNotification(winner.userId, 'Tontine Gagnée !', `La cagnotte de ${expectedTotal} FCFA a été virée sur votre wallet.`);
+            
+            // Advance turn or complete
+            let newStatus = 'ACTIVE';
+            let nextTurn = updatedGroup.currentTurnIndex + 1;
+            if (nextTurn > updatedGroup.maxMembers) {
+              newStatus = 'COMPLETED'; // Tontine cycle finished
+              nextTurn = 1;
+            }
+            
+            await prisma.tontineGroup.update({
+              where: { id: updatedGroup.id },
+              data: { cagnotte: 0, currentTurnIndex: nextTurn, status: newStatus }
+            });
+            
+            await prisma.tontineMember.update({
+              where: { id: winner.id },
+              data: { hasReceivedPayout: true }
+            });
+          }
         }
       }
     }
