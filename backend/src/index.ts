@@ -4,6 +4,8 @@ import cors from 'cors';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { PrismaClient } from '@prisma/client';
+import { Pool } from 'pg';
+import { PrismaPg } from '@prisma/adapter-pg';
 
 const app = express();
 const httpServer = createServer(app);
@@ -13,7 +15,9 @@ const io = new Server(httpServer, {
   }
 });
 
-const prisma = new PrismaClient();
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 app.use(cors());
 app.use(express.json());

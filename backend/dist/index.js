@@ -9,6 +9,8 @@ const cors_1 = __importDefault(require("cors"));
 const http_1 = require("http");
 const socket_io_1 = require("socket.io");
 const client_1 = require("@prisma/client");
+const pg_1 = require("pg");
+const adapter_pg_1 = require("@prisma/adapter-pg");
 const app = (0, express_1.default)();
 const httpServer = (0, http_1.createServer)(app);
 const io = new socket_io_1.Server(httpServer, {
@@ -16,7 +18,9 @@ const io = new socket_io_1.Server(httpServer, {
         origin: '*',
     }
 });
-const prisma = new client_1.PrismaClient();
+const pool = new pg_1.Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new adapter_pg_1.PrismaPg(pool);
+const prisma = new client_1.PrismaClient({ adapter });
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
 // Basic API to verify it works
