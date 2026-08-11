@@ -75,7 +75,16 @@ export default function ChauffeurHome() {
           <div className="flex items-center justify-between mb-5 bg-white border rounded-xl p-4 shadow-sm">
             <div>
               <div className="font-semibold">{driver.vehicle.marque} {driver.vehicle.modele}</div>
-              <div className="text-xs text-gray-500">★ {driver.rating.toFixed(1)} · {driver.vehicle.plaque}</div>
+              <div className="text-xs text-gray-500 mb-2">★ {driver.rating.toFixed(1)} · {driver.vehicle.plaque}</div>
+              {/* Gamification Badge */}
+              <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold shadow-sm border ${
+                currentUser.driverLevel === 'GOLD' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
+                currentUser.driverLevel === 'SILVER' ? 'bg-gray-200 text-gray-700 border-gray-300' :
+                'bg-orange-100 text-orange-700 border-orange-200'
+              }`}>
+                <span>{currentUser.driverLevel === 'GOLD' ? '🏆 Gold' : currentUser.driverLevel === 'SILVER' ? '🥈 Silver' : '🥉 Bronze'}</span>
+                <span className="opacity-70">({currentUser.completedRides || 0} courses)</span>
+              </div>
             </div>
             <button 
               onClick={() => driverSetOnline(driver.id, !driver.isOnline)} 

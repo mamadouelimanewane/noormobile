@@ -982,10 +982,28 @@ io.on('connection', (socket) => {
     // For payments on completion
     if (data.status === 'termine' && req.driverId) {
       const settings = await prisma.platformSettings.findUnique({ where: { id: 'default' } });
-      const commRate = settings?.commissionRate || 0.12;
+      let commRate = settings?.commissionRate || 0.12;
       
       const activeTaxes = await prisma.tax.findMany({ where: { isActive: true } });
       const totalTaxRate = activeTaxes.reduce((sum: number, t: any) => sum + t.rate, 0);
+
+      // --- GAMIFICATION LOGIC ---
+      const driver = await prisma.user.findUnique({ where: { id: req.driverId } });
+      if (driver) {
+        if (driver.driverLevel === 'SILVER') commRate = 0.10;
+        if (driver.driverLevel === 'GOLD') commRate = 0.08;
+
+        const newRidesCount = driver.completedRides + 1;
+        let newLevel = 'BRONZE';
+        if (newRidesCount > 50) newLevel = 'SILVER';
+        if (newRidesCount > 200) newLevel = 'GOLD';
+
+        await prisma.user.update({
+          where: { id: req.driverId },
+          data: { completedRides: newRidesCount, driverLevel: newLevel }
+        });
+      }
+      // --------------------------
 
       const commission = Math.round(req.proposedPrice * commRate);
       const taxAmount = Math.round(req.proposedPrice * totalTaxRate);

@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
-import { Settings, Users, LogOut, CheckCircle2, LayoutDashboard, CreditCard, Activity, TrendingUp, Percent, Wallet, Download, Upload, Edit3, Trash2, Eye, X, Landmark, CheckCircle, XCircle } from 'lucide-react';
+import { Settings, Users, LogOut, CheckCircle2, LayoutDashboard, CreditCard, Activity, TrendingUp, Percent, Wallet, Download, Upload, Edit3, Trash2, Eye, X, Landmark, CheckCircle, XCircle, FileSpreadsheet, BarChart2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatFcfa } from '../lib/geo';
+import * as XLSX from 'xlsx';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 
 export default function AdminHome() {
   const [tab, setTab] = useState('dashboard');
@@ -266,6 +268,9 @@ export default function AdminHome() {
           </button>
           <button onClick={() => setTab('users')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'users' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
             <Users className="w-5 h-5" /> CRM Utilisateurs
+          </button>
+          <button onClick={() => setTab('analytics')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'analytics' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
+            <BarChart2 className="w-5 h-5" /> Analyse & Export
           </button>
           <button onClick={() => setTab('support')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'support' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
             <HelpCircle className="w-5 h-5" /> Support Client
@@ -756,6 +761,57 @@ export default function AdminHome() {
                     <p>Sélectionnez un ticket pour afficher la conversation.</p>
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {tab === 'analytics' && (
+          <div className="h-full flex flex-col">
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-3xl font-bold text-gray-800">Analyse & Exports Comptables</h2>
+              <button onClick={() => {
+                const ws = XLSX.utils.json_to_sheet(transactions.map(t => ({
+                  Date: new Date(t.createdAt).toLocaleDateString(),
+                  Référence: t.reference,
+                  Type: t.type,
+                  Montant: t.amount,
+                  Méthode: t.method,
+                  Description: t.description
+                })));
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Transactions");
+                XLSX.writeFile(wb, `NoorDrive_Compta_${new Date().toISOString().split('T')[0]}.xlsx`);
+              }} className="bg-noordrive-green text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 hover:brightness-105">
+                <FileSpreadsheet className="w-5 h-5" /> Exporter (Excel)
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-6 mb-6">
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-[300px]">
+                <h3 className="font-bold text-gray-600 mb-4">Volume des Transactions (Derniers jours)</h3>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={transactions.slice(0,10)}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="method" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="amount" fill="#0a8f4c" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-[300px]">
+                <h3 className="font-bold text-gray-600 mb-4">Évolution des Micro-Crédits</h3>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={loans.slice(0,10)}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="dureeMois" />
+                    <YAxis />
+                    <Tooltip />
+                    <Line type="monotone" dataKey="montant" stroke="#8884d8" />
+                    <Line type="monotone" dataKey="montantRembourse" stroke="#82ca9d" />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
             </div>
           </div>

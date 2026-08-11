@@ -35,6 +35,8 @@ model User {
   isOnline      Boolean  @default(false)
   accountStatus String   @default("APPROVED") // "APPROVED", "PENDING", "REJECTED"
   vehicle       Vehicle?
+  driverLevel   String   @default("BRONZE") // BRONZE, SILVER, GOLD
+  completedRides Int     @default(0)
   documents     DriverDocument[]
   
   // Relations
