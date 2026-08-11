@@ -8,6 +8,7 @@ import { formatFcfa } from '../../lib/geo';
 import { Mic } from 'lucide-react';
 import { useSpeechToText } from '../../hooks/useSpeechToText';
 import type { Driver, ServiceRequest } from '../../types';
+import ParrainageTab from '../../components/ParrainageTab';
 
 const TYPE_LABEL: Record<string, string> = { ride: 'Course', delivery: 'Livraison', intercity: 'Ville à ville' };
 
@@ -89,6 +90,7 @@ export default function ChauffeurHome() {
           {tab === 'courses' && <CoursesTab requests={requests.filter((r) => r.driverId === driver.id)} />}
           {tab === 'revenus' && <RevenusTab />}
           {tab === 'portefeuille' && <MoneyTab driverId={driver.id} />}
+          {tab === 'parrainage' && <ParrainageTab />}
         </div>
       </Layout>
     );

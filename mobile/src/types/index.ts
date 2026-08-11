@@ -27,6 +27,7 @@ export interface User {
   ratingCount: number;
   createdAt: number;
   avatarColor: string;
+  referralCode?: string;
 }
 
 export interface Driver extends User {

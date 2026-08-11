@@ -22,6 +22,7 @@ export default function Auth() {
   const [modele, setModele] = useState(VEHICULES[0][1]);
   const [plaque, setPlaque] = useState('');
   const [couleur, setCouleur] = useState('Blanche');
+  const [referralCode, setReferralCode] = useState('');
   const [error, setError] = useState('');
 
   const currentUser = useStore((s) => s.currentUser);
@@ -69,7 +70,7 @@ export default function Auth() {
       const { api } = await import('../lib/api');
       const payload = mode === 'connexion' 
         ? { phone, role } 
-        : { phone, role, name, vehicle: role === 'chauffeur' ? { marque, modele, plaque: plaque || 'DK 1234 AB', couleur } : undefined };
+        : { phone, role, name, referralCode: referralCode.trim() || undefined, vehicle: role === 'chauffeur' ? { marque, modele, plaque: plaque || 'DK 1234 AB', couleur } : undefined };
       
       const res = await api.post('/auth/login', payload);
       if (res.data.ok) {
@@ -135,14 +136,27 @@ export default function Auth() {
             {mode === 'inscription' && (
               <div>
                 <label className="text-xs font-medium text-gray-500">Nom complet</label>
-                <input
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full border rounded-lg px-3 py-2 mt-1"
-                  placeholder="Ex : Fatou Diop"
-                />
-              </div>
+              <>
+                <div>
+                  <label className="text-xs font-medium text-gray-500">Nom complet</label>
+                  <input
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full border rounded-lg px-3 py-2 mt-1"
+                    placeholder="Ex : Fatou Diop"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500">Code de parrainage (Optionnel)</label>
+                  <input
+                    value={referralCode}
+                    onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                    className="w-full border rounded-lg px-3 py-2 mt-1 uppercase"
+                    placeholder="NOOR-XXXXXX"
+                  />
+                </div>
+              </>
             )}
             <div>
               <label className="text-xs font-medium text-gray-500">Numéro de téléphone</label>

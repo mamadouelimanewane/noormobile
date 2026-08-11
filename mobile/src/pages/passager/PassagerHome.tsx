@@ -6,6 +6,7 @@ import PlaceSelect from '../../components/PlaceSelect';
 import OffersList from '../../components/OffersList';
 import TrackingPanel from '../../components/TrackingPanel';
 import MapView from '../../components/MapView';
+import ParrainageTab from '../../components/ParrainageTab';
 import { formatFcfa, distanceKm } from '../../lib/geo';
 import { CITY_COORDS } from '../../data/cities';
 import { VILLES_INTERCITY } from '../../types';
@@ -81,12 +82,13 @@ export default function PassagerHome() {
   }
 
   // Si on affiche Historique ou Portefeuille, on ne veut pas la carte en fond, ou on la masque
-  if (tab === 'historique' || tab === 'portefeuille') {
+  if (tab === 'historique' || tab === 'portefeuille' || tab === 'compte' || tab === 'parrainage') {
     return (
       <Layout activeTab={tab} onTabChange={setTab}>
         <div className="pt-16 max-w-xl mx-auto w-full">
-          {tab === 'historique' && <Historique requests={requests} />}
-          {tab === 'portefeuille' && <WalletTab />}
+          {tab === 'historique' && <HistoriqueTab requests={requests.filter((r) => r.passengerId === currentUser.id)} />}
+          {tab === 'compte' && <CompteTab />}
+          {tab === 'parrainage' && <ParrainageTab />}
         </div>
       </Layout>
     );

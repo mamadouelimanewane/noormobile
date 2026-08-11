@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 import { formatFcfa } from '../lib/geo';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Map, Wallet, Clock, LogOut } from 'lucide-react';
+import { Menu, X, Map, Wallet, Clock, LogOut, Gift } from 'lucide-react';
 
 interface LayoutProps {
   children: ReactNode;
@@ -85,6 +85,9 @@ export default function Layout({ children, activeTab, onTabChange }: LayoutProps
                   )}
                   <button onClick={() => { onTabChange?.('portefeuille'); setMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${activeTab === 'portefeuille' || activeTab === 'money' ? 'bg-gray-100 text-black' : 'text-gray-600 hover:bg-gray-50'}`}>
                     <Wallet className="w-5 h-5" /> Portefeuille ({formatFcfa(wallet || 0)})
+                  </button>
+                  <button onClick={() => { onTabChange?.('parrainage'); setMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${activeTab === 'parrainage' ? 'bg-gray-100 text-black' : 'text-gray-600 hover:bg-gray-50'}`}>
+                    <Gift className="w-5 h-5 text-noordrive-green" /> Parrainage
                   </button>
                 </nav>
               </div>

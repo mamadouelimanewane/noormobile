@@ -5,6 +5,7 @@ import Auth from './pages/Auth';
 import PassagerHome from './pages/passager/PassagerHome';
 import ChauffeurHome from './pages/chauffeur/ChauffeurHome';
 import PendingValidation from './pages/chauffeur/PendingValidation';
+import AdminHome from './pages/AdminHome';
 import ProtectedRoute from './components/ProtectedRoute';
 import ProtectedRoute from './components/ProtectedRoute';
 import LocationTracker from './components/LocationTracker';
@@ -21,6 +22,14 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/connexion" element={<Auth />} />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute role="admin">
+              <AdminHome />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/passager"
           element={

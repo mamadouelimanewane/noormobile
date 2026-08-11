@@ -29,26 +29,79 @@ app.get('/api/health', (req, res) => {
 
 // Register or Login Endpoint
 app.post('/api/auth/login', async (req, res) => {
-  const { phone, role, name, vehicle } = req.body;
+  const { phone, role, name, vehicle, referralCode } = req.body;
   try {
     let user = await prisma.user.findUnique({ where: { phone } });
     if (!user) {
       if (!name) return res.status(400).json({ error: 'Name required for registration' });
+      
+      const newCode = 'NOOR-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+      let sponsor = null;
+      if (referralCode) {
+        sponsor = await prisma.user.findUnique({ where: { referralCode } });
+      }
+
       user = await prisma.user.create({
         data: {
           phone,
           name,
           role,
           accountStatus: role === 'chauffeur' ? 'PENDING' : 'APPROVED',
-          avatarColor: '#0a8f4c', // simplified
+          avatarColor: '#0a8f4c',
+          referralCode: newCode,
+          referredById: sponsor?.id || null,
           vehicle: role === 'chauffeur' && vehicle ? {
             create: vehicle
           } : undefined
         }
       });
+
+      if (sponsor) {
+        const settings = await prisma.platformSettings.findUnique({ where: { id: 'default' } });
+        const sponsorBonus = settings?.referralBonusSponsor || 1000;
+        const refereeBonus = settings?.referralBonusReferee || 500;
+
+        await prisma.$transaction([
+          prisma.user.update({
+            where: { id: sponsor.id },
+            data: { walletBalance: { increment: sponsorBonus } }
+          }),
+          prisma.transaction.create({
+            data: {
+              userId: sponsor.id,
+              type: 'topup',
+              amount: sponsorBonus,
+              method: 'system',
+              status: 'completed',
+              reference: `REF-${user.id}`,
+              description: `Bonus Parrainage (${user.name})`
+            }
+          }),
+          prisma.user.update({
+            where: { id: user.id },
+            data: { walletBalance: { increment: refereeBonus } }
+          }),
+          prisma.transaction.create({
+            data: {
+              userId: user.id,
+              type: 'topup',
+              amount: refereeBonus,
+              method: 'system',
+              status: 'completed',
+              reference: `WELC-${user.id}`,
+              description: `Bonus Bienvenue (Parrainé)`
+            }
+          })
+        ]);
+        user = await prisma.user.findUnique({ where: { id: user.id } }) as any;
+      }
     } else {
       if (user.role !== role) {
         return res.status(400).json({ error: 'Role mismatch' });
+      }
+      if (!user.referralCode) {
+        const newCode = 'NOOR-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+        user = await prisma.user.update({ where: { id: user.id }, data: { referralCode: newCode } });
       }
     }
     res.json({ ok: true, user });
@@ -58,6 +111,31 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // Admin routes
+app.get('/api/admin/settings', async (req, res) => {
+  try {
+    let settings = await prisma.platformSettings.findUnique({ where: { id: 'default' } });
+    if (!settings) {
+      settings = await prisma.platformSettings.create({ data: { id: 'default' } });
+    }
+    res.json(settings);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/settings', async (req, res) => {
+  try {
+    const { commissionRate, referralBonusSponsor, referralBonusReferee } = req.body;
+    const settings = await prisma.platformSettings.upsert({
+      where: { id: 'default' },
+      update: { commissionRate, referralBonusSponsor, referralBonusReferee },
+      create: { id: 'default', commissionRate, referralBonusSponsor, referralBonusReferee }
+    });
+    res.json(settings);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
 app.get('/api/admin/pending-drivers', async (req, res) => {
   try {
     const users = await prisma.user.findMany({ where: { role: 'chauffeur', accountStatus: 'PENDING' }, include: { vehicle: true } });

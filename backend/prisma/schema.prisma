@@ -22,6 +22,10 @@ model User {
   emergencyName String?
   emergencyPhone String?
 
+  // Referral System
+  referralCode  String?  @unique
+  referredById  String?
+
   createdAt     DateTime @default(now())
 
   // Driver specifics
@@ -138,9 +142,11 @@ model ChatMessage {
 }
 
 model PlatformSettings {
-  id             String @id @default("default")
-  commissionRate Float  @default(0.12)
-  taxRate        Float  @default(0.18)
+  id                   String @id @default("default")
+  commissionRate       Float  @default(0.12)
+  taxRate              Float  @default(0.18)
+  referralBonusSponsor Float  @default(1000)
+  referralBonusReferee Float  @default(500)
 }
 
 model DriverDocument {
