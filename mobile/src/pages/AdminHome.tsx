@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
-import { Settings, Users, LogOut, CheckCircle2, LayoutDashboard, CreditCard, Activity, TrendingUp, Percent, Wallet, Download, Upload, Edit3, Trash2, Eye, X } from 'lucide-react';
+import { Settings, Users, LogOut, CheckCircle2, LayoutDashboard, CreditCard, Activity, TrendingUp, Percent, Wallet, Download, Upload, Edit3, Trash2, Eye, X, Landmark, CheckCircle, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatFcfa } from '../lib/geo';
 
@@ -21,6 +21,7 @@ export default function AdminHome() {
   const [stats, setStats] = useState({ totalUsers: 0, totalRides: 0, totalRevenue: 0 });
   const [usersList, setUsersList] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [loans, setLoans] = useState<any[]>([]);
   
   const [taxes, setTaxes] = useState<any[]>([]);
   const [newTaxName, setNewTaxName] = useState('');
@@ -55,6 +56,7 @@ export default function AdminHome() {
       api.get('/admin/users').then(res => setUsersList(res.data)).catch(console.error);
       api.get('/admin/taxes').then(res => setTaxes(res.data)).catch(console.error);
       api.get('/admin/transactions').then(res => setTransactions(res.data)).catch(console.error);
+      api.get('/admin/loans').then(res => setLoans(res.data)).catch(console.error);
     });
   };
 
@@ -145,6 +147,22 @@ export default function AdminHome() {
     }
   };
 
+  const handleApproveLoan = (loanId: string) => {
+    if(window.confirm('Valider ce prêt ? Le montant sera crédité sur le Wallet du chauffeur.')) {
+      import('../lib/api').then(({ api }) => {
+        api.post('/admin/loans/approve', { loanId }).then(() => fetchData()).catch(console.error);
+      });
+    }
+  };
+
+  const handleRejectLoan = (loanId: string) => {
+    if(window.confirm('Refuser cette demande de prêt ?')) {
+      import('../lib/api').then(({ api }) => {
+        api.post('/admin/loans/reject', { loanId }).then(() => fetchData()).catch(console.error);
+      });
+    }
+  };
+
   const openCRM = (user: any) => {
     setSelectedUser(user);
     setCrmData({
@@ -216,6 +234,9 @@ export default function AdminHome() {
           </button>
           <button onClick={() => setTab('users')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'users' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
             <Users className="w-5 h-5" /> CRM Utilisateurs
+          </button>
+          <button onClick={() => setTab('loans')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'loans' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
+            <Landmark className="w-5 h-5" /> Micro-crédits
           </button>
           <button onClick={() => setTab('taxes')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'taxes' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
             <Percent className="w-5 h-5" /> Moteur de Taxes
@@ -569,6 +590,77 @@ export default function AdminHome() {
             </div>
           </div>
         )}
+        {tab === 'taxes' && (
+          <div>
+            <h2 className="text-3xl font-bold mb-8 text-gray-800">Moteur de Taxes</h2>
+            {/* ... contenu taxes ... */}
+          </div>
+        )}
+
+        {tab === 'loans' && (
+          <div>
+            <h2 className="text-3xl font-bold mb-8 text-gray-800">Gestion des Micro-crédits</h2>
+            
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-8">
+              <table className="w-full text-left">
+                <thead className="bg-gray-50 border-b border-gray-100 text-sm text-gray-500">
+                  <tr>
+                    <th className="p-4 font-semibold">Chauffeur</th>
+                    <th className="p-4 font-semibold">Montant</th>
+                    <th className="p-4 font-semibold">Motif & Durée</th>
+                    <th className="p-4 font-semibold">Remboursé</th>
+                    <th className="p-4 font-semibold">Statut</th>
+                    <th className="p-4 font-semibold text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {loans.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-gray-500">Aucune demande de prêt</td></tr>}
+                  {loans.map(loan => (
+                    <tr key={loan.id} className="hover:bg-gray-50 transition">
+                      <td className="p-4">
+                        <p className="font-bold">{loan.driver?.name}</p>
+                        <p className="text-xs text-gray-500">{loan.driver?.phone}</p>
+                      </td>
+                      <td className="p-4 font-black">{formatFcfa(loan.montant)}</td>
+                      <td className="p-4">
+                        <p className="font-medium text-sm">{loan.motif}</p>
+                        <p className="text-xs text-gray-500">{loan.dureeMois} mois ({formatFcfa(loan.mensualite)}/mois)</p>
+                      </td>
+                      <td className="p-4">
+                        <div className="w-full bg-gray-200 rounded-full h-1.5 mb-1 max-w-[100px]">
+                          <div className="bg-blue-500 h-1.5 rounded-full" style={{width: `${(loan.montantRembourse / loan.montant)*100}%`}}></div>
+                        </div>
+                        <span className="text-xs font-bold text-gray-600">{formatFcfa(loan.montantRembourse)}</span>
+                      </td>
+                      <td className="p-4">
+                        <span className={`px-2 py-1 rounded-md text-xs font-bold capitalize ${
+                          loan.status === 'en_attente' ? 'bg-orange-100 text-orange-600' :
+                          loan.status === 'en_cours' ? 'bg-blue-100 text-blue-600' :
+                          loan.status === 'rembourse' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                        }`}>
+                          {loan.status.replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td className="p-4 text-right flex justify-end gap-2">
+                        {loan.status === 'en_attente' && (
+                          <>
+                            <button onClick={() => handleApproveLoan(loan.id)} className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition" title="Valider">
+                              <CheckCircle className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => handleRejectLoan(loan.id)} className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition" title="Refuser">
+                              <XCircle className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );

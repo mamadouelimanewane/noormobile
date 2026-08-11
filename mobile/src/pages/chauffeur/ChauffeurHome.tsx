@@ -11,6 +11,7 @@ import type { Driver, ServiceRequest } from '../../types';
 import ParrainageTab from '../../components/ParrainageTab';
 import Wallet from '../../components/Wallet';
 import DriverCarpool from '../../components/DriverCarpool';
+import MicroCredit from '../../components/MicroCredit';
 
 const TYPE_LABEL: Record<string, string> = { ride: 'Course', delivery: 'Livraison', intercity: 'Ville à ville' };
 
@@ -92,6 +93,7 @@ export default function ChauffeurHome() {
           {tab === 'courses' && <CoursesTab requests={requests.filter((r) => r.driverId === driver.id)} />}
           {tab === 'revenus' && <RevenusTab />}
           {tab === 'portefeuille' && <Wallet />}
+          {tab === 'microcredit' && <MicroCredit />}
           {tab === 'covoiturage' && <DriverCarpool />}
           {tab === 'parrainage' && <ParrainageTab />}
         </div>

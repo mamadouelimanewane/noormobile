@@ -131,6 +131,7 @@ model LoanRequest {
   motif       String
   dureeMois   Int
   mensualite  Float
+  montantRembourse Float @default(0.0)
   status      String   // "en_attente", "approuve", "refuse", "rembourse", "en_cours"
   createdAt   DateTime @default(now())
 }

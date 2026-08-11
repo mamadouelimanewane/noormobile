@@ -82,9 +82,14 @@ export default function Layout({ children, activeTab, onTabChange }: LayoutProps
                     <Clock className="w-5 h-5" /> Historique de courses
                   </button>
                   {currentUser?.role === 'chauffeur' && (
+                    <>
                     <button onClick={() => { onTabChange?.('revenus'); setMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${activeTab === 'revenus' ? 'bg-gray-100 text-black' : 'text-gray-600 hover:bg-gray-50'}`}>
                       <Wallet className="w-5 h-5" /> Mes Revenus
                     </button>
+                    <button onClick={() => { onTabChange?.('microcredit'); setMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${activeTab === 'microcredit' ? 'bg-gray-100 text-black' : 'text-gray-600 hover:bg-gray-50'}`}>
+                      <Gift className="w-5 h-5 text-orange-500" /> Micro-crédit
+                    </button>
+                    </>
                   )}
                   <button onClick={() => { onTabChange?.('portefeuille'); setMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${activeTab === 'portefeuille' || activeTab === 'money' ? 'bg-gray-100 text-black' : 'text-gray-600 hover:bg-gray-50'}`}>
                     <Wallet className="w-5 h-5" /> Portefeuille ({formatFcfa(wallet || 0)})

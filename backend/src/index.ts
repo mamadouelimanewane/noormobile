@@ -281,6 +281,89 @@ app.post('/api/carpool/book', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// --- MICRO-CREDIT APIS ---
+app.post('/api/loans/request', async (req, res) => {
+  try {
+    const { driverId, montant, motif, dureeMois } = req.body;
+    
+    // Check pending/active loans
+    const existing = await prisma.loanRequest.findFirst({
+      where: { driverId, status: { in: ['en_attente', 'en_cours'] } }
+    });
+    if (existing) return res.status(400).json({ error: 'Vous avez déjà une demande en attente ou un prêt en cours.' });
+    
+    const settings = await prisma.platformSettings.findUnique({ where: { id: 'default' } });
+    const maxLoan = settings?.maxLoanAmount || 100000;
+    
+    if (montant > maxLoan) return res.status(400).json({ error: `Le montant ne peut excéder ${maxLoan} FCFA.` });
+    
+    const loan = await prisma.loanRequest.create({
+      data: {
+        driverId, montant, motif, dureeMois, mensualite: Math.round(montant / dureeMois), status: 'en_attente'
+      }
+    });
+    res.json(loan);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/loans/driver/:id', async (req, res) => {
+  try {
+    const loans = await prisma.loanRequest.findMany({
+      where: { driverId: req.params.id },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(loans);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/admin/loans', async (req, res) => {
+  try {
+    const loans = await prisma.loanRequest.findMany({
+      include: { driver: true },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(loans);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/loans/approve', async (req, res) => {
+  try {
+    const { loanId } = req.body;
+    const loan = await prisma.loanRequest.findUnique({ where: { id: loanId } });
+    if (!loan || loan.status !== 'en_attente') return res.status(400).json({ error: 'Prêt introuvable ou déjà traité' });
+    
+    await prisma.$transaction([
+      prisma.loanRequest.update({ where: { id: loanId }, data: { status: 'en_cours' } }),
+      prisma.user.update({ where: { id: loan.driverId }, data: { walletBalance: { increment: loan.montant } } }),
+      prisma.transaction.create({
+        data: {
+          userId: loan.driverId, type: 'loan', amount: loan.montant, method: 'wallet', status: 'completed',
+          reference: `LOAN-${loanId}`, description: `Déblocage Micro-crédit (${loan.motif})`
+        }
+      })
+    ]);
+    res.json({ ok: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/loans/reject', async (req, res) => {
+  try {
+    const { loanId } = req.body;
+    await prisma.loanRequest.update({ where: { id: loanId }, data: { status: 'refuse' } });
+    res.json({ ok: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
 // --------------------
 
 // Admin routes
@@ -809,10 +892,24 @@ io.on('connection', (socket) => {
       
       const net = req.proposedPrice - commission - taxAmount;
       
+      // -- AUTO-REIMBURSEMENT LOGIC --
+      const activeLoan = await prisma.loanRequest.findFirst({
+        where: { driverId: req.driverId, status: 'en_cours' }
+      });
+      
+      let loanDeduction = 0;
+      if (activeLoan) {
+        // Prélèvement automatique de 20% des revenus nets de la course
+        const remainingToPay = activeLoan.montant - activeLoan.montantRembourse;
+        loanDeduction = Math.min(Math.round(net * 0.20), remainingToPay); // Cannot deduct more than what is left
+      }
+      
+      const finalNet = net - loanDeduction;
+
       // Debit passenger
       await prisma.user.update({ where: { id: req.passengerId }, data: { walletBalance: { decrement: req.proposedPrice } } });
-      // Credit driver
-      await prisma.user.update({ where: { id: req.driverId }, data: { walletBalance: { increment: net } } });
+      // Credit driver (Final net)
+      await prisma.user.update({ where: { id: req.driverId }, data: { walletBalance: { increment: finalNet } } });
       
       await prisma.transaction.create({
         data: { userId: req.passengerId, type: 'payment', amount: -req.proposedPrice, method: 'wave', status: 'completed', reference: req.id, description: `Paiement course` }
@@ -823,6 +920,22 @@ io.on('connection', (socket) => {
       await prisma.transaction.create({
         data: { userId: req.driverId, type: 'commission', amount: -(commission + taxAmount), method: 'cash', status: 'completed', reference: req.id, description: `Commission & Taxes (${(commRate * 100).toFixed(1)}% + ${(totalTaxRate * 100).toFixed(1)}%)` }
       });
+
+      if (loanDeduction > 0 && activeLoan) {
+        await prisma.transaction.create({
+          data: { userId: req.driverId, type: 'payment', amount: -loanDeduction, method: 'wallet', status: 'completed', reference: req.id, description: `Remboursement automatique Micro-crédit` }
+        });
+        
+        const updatedLoan = await prisma.loanRequest.update({
+          where: { id: activeLoan.id },
+          data: { montantRembourse: { increment: loanDeduction } }
+        });
+        
+        // Check if fully paid
+        if (updatedLoan.montantRembourse >= updatedLoan.montant) {
+          await prisma.loanRequest.update({ where: { id: activeLoan.id }, data: { status: 'rembourse' } });
+        }
+      }
     }
 
     const formattedReq = { ...req, createdAt: req.createdAt.getTime(), updatedAt: req.updatedAt.getTime() };
