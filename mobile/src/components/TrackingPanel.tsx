@@ -16,6 +16,7 @@ const STATUS_LABEL: Record<string, string> = {
 export default function TrackingPanel({ request, viewerRole }: { request: ServiceRequest; viewerRole: 'passager' | 'chauffeur' }) {
   const rateRequest = useStore((s) => s.rateRequest);
   const updateRideStatus = useStore((s) => s.updateRideStatus);
+  const cancelRequest = useStore((s) => s.cancelRequest);
   const [stars, setStars] = useState(5);
   const [isPaid, setIsPaid] = useState(false);
   const alreadyRated = viewerRole === 'passager' ? request.ratingDriver : request.ratingPassenger;
@@ -62,6 +63,19 @@ export default function TrackingPanel({ request, viewerRole }: { request: Servic
             className="w-full bg-noordrive-black text-white font-bold py-3 rounded-xl"
           >
             Client récupéré (Démarrer la course)
+          </button>
+        )}
+
+        {request.status === 'attribue' && (
+          <button 
+            onClick={() => {
+              if (window.confirm('Voulez-vous vraiment annuler cette course ?')) {
+                cancelRequest(request.id);
+              }
+            }} 
+            className="w-full bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3 rounded-xl transition"
+          >
+            Annuler la course
           </button>
         )}
 

@@ -86,11 +86,28 @@ export default function SocketManager() {
       });
     };
 
+    const handleRideCancelled = (request: ServiceRequest) => {
+      useStore.setState(s => {
+        const reqIndex = s.requests.findIndex(r => r.id === request.id);
+        if (reqIndex !== -1) {
+          if (currentUser.role === 'chauffeur' || currentUser.role === 'passager') {
+             playNotificationSound();
+             toast.error('La course a été annulée.', { icon: '❌' });
+          }
+          const newRequests = [...s.requests];
+          newRequests[reqIndex] = request;
+          return { requests: newRequests };
+        }
+        return s;
+      });
+    };
+
     socket.on('connect', handleConnect);
     socket.on('ride:new_request', handleNewRequest);
     socket.on('ride:new_offer', handleNewOffer);
     socket.on('ride:accepted', handleRideAccepted);
     socket.on('ride:updated', handleRideUpdated);
+    socket.on('ride:cancelled', handleRideCancelled);
 
     return () => {
       socket.off('connect', handleConnect);
@@ -98,6 +115,7 @@ export default function SocketManager() {
       socket.off('ride:new_offer', handleNewOffer);
       socket.off('ride:accepted', handleRideAccepted);
       socket.off('ride:updated', handleRideUpdated);
+      socket.off('ride:cancelled', handleRideCancelled);
     };
   }, [currentUser]);
 
