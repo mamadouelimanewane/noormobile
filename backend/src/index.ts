@@ -300,19 +300,20 @@ app.post('/api/wallet/cashout', async (req, res) => {
 app.post('/api/pricing/estimate', async (req, res) => {
   try {
     const { distanceKm, type, category } = req.body;
-    let baseRate = 500; // Standard rate per km
-    let minPrice = 1000;
+    const settings = await prisma.platformSettings.findUnique({ where: { id: 'default' } });
+    
+    let baseRate = settings?.perKmRate || 500;
+    let minPrice = settings?.baseFare || 1000;
     
     if (category === 'Confort') {
-      baseRate = 800;
-      minPrice = 2000;
+      baseRate = Math.round(baseRate * 1.5);
+      minPrice = Math.round(minPrice * 1.5);
     } else if (category === 'Moto') {
-      baseRate = 300;
-      minPrice = 500;
+      baseRate = Math.round(baseRate * 0.5);
+      minPrice = Math.round(minPrice * 0.5);
     }
     
     // Simulate Surge Pricing (e.g., multiplier between 1.0 and 1.5 based on random demand)
-    // In a real app, this would query active requests in the geohash
     const surgeMultiplier = 1.0 + (Math.random() * 0.5); 
     
     let estimatedPrice = Math.max(minPrice, Math.round(distanceKm * baseRate * surgeMultiplier));
@@ -504,8 +505,16 @@ io.on('connection', (socket) => {
     
     // For payments on completion
     if (data.status === 'termine' && req.driverId) {
-      const commission = Math.round(req.proposedPrice * 0.12);
-      const net = req.proposedPrice - commission;
+      const settings = await prisma.platformSettings.findUnique({ where: { id: 'default' } });
+      const commRate = settings?.commissionRate || 0.12;
+      
+      const activeTaxes = await prisma.tax.findMany({ where: { isActive: true } });
+      const totalTaxRate = activeTaxes.reduce((sum: number, t: any) => sum + t.rate, 0);
+
+      const commission = Math.round(req.proposedPrice * commRate);
+      const taxAmount = Math.round(req.proposedPrice * totalTaxRate);
+      
+      const net = req.proposedPrice - commission - taxAmount;
       
       // Debit passenger
       await prisma.user.update({ where: { id: req.passengerId }, data: { walletBalance: { decrement: req.proposedPrice } } });
@@ -519,7 +528,7 @@ io.on('connection', (socket) => {
         data: { userId: req.driverId, type: 'payment', amount: req.proposedPrice, method: 'cash', status: 'completed', reference: req.id, description: `Gain course` }
       });
       await prisma.transaction.create({
-        data: { userId: req.driverId, type: 'commission', amount: -commission, method: 'cash', status: 'completed', reference: req.id, description: `Commission plateforme` }
+        data: { userId: req.driverId, type: 'commission', amount: -(commission + taxAmount), method: 'cash', status: 'completed', reference: req.id, description: `Commission & Taxes (${(commRate * 100).toFixed(1)}% + ${(totalTaxRate * 100).toFixed(1)}%)` }
       });
     }
 
