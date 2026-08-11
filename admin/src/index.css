@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+:root {
+  --noordrive-green: #0a8f4c;
+  --noordrive-green-dark: #08733d;
+  --noordrive-black: #0e0e10;
+  --noordrive-gold: #f5b301;
+  --noordrive-red: #e33;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: #f4f6f5;
+  color: var(--noordrive-black);
+}

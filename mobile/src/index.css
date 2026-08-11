@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@theme {
+  --color-noordrive-green: #0a8f4c;
+  --color-noordrive-green-dark: #086b3a;
+  --color-noordrive-black: #0e0e10;
+  --color-noordrive-gold: #f5b301;
+  --color-noordrive-red: #e33;
+  --font-sans: 'Segoe UI', system-ui, Roboto, sans-serif;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: #f4f6f5;
+  color: #16181c;
+}
+
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}

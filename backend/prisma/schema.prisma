@@ -1,0 +1,135 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id            String   @id @default(cuid())
+  phone         String   @unique
+  name          String
+  role          String   // "passager", "chauffeur", "admin"
+  rating        Float    @default(5.0)
+  ratingCount   Int      @default(0)
+  avatarColor   String
+  walletBalance Float    @default(0.0)
+  createdAt     DateTime @default(now())
+
+  // Driver specifics
+  isOnline      Boolean  @default(false)
+  accountStatus String   @default("APPROVED") // "APPROVED", "PENDING", "REJECTED"
+  vehicle       Vehicle?
+  
+  // Relations
+  requestsAsPassenger ServiceRequest[] @relation("PassengerRequests")
+  requestsAsDriver    ServiceRequest[] @relation("DriverRequests")
+  offers              Offer[]
+  transactions        Transaction[]
+  loans               LoanRequest[]
+  messages            ChatMessage[]
+}
+
+model Vehicle {
+  id       String @id @default(cuid())
+  driverId String @unique
+  marque   String
+  modele   String
+  plaque   String
+  couleur  String
+  driver   User   @relation(fields: [driverId], references: [id])
+}
+
+model ServiceRequest {
+  id              String   @id @default(cuid())
+  type            String   // "ride", "delivery", "intercity"
+  passengerId     String
+  passenger       User     @relation("PassengerRequests", fields: [passengerId], references: [id])
+  driverId        String?
+  driver          User?    @relation("DriverRequests", fields: [driverId], references: [id])
+  status          String   // "recherche", "negociation", "attribue", "en_cours", "termine", "annule"
+  proposedPrice   Float
+  pickupLat       Float
+  pickupLng       Float
+  pickupLabel     String
+  dropoffLat      Float
+  dropoffLng      Float
+  dropoffLabel    String
+  driverPosLat    Float?
+  driverPosLng    Float?
+  
+  ratingPassenger Float?
+  ratingDriver    Float?
+
+  // For Delivery
+  packageDesc     String?
+  packageSize     String?
+  destName        String?
+  destPhone       String?
+
+  // For Intercity
+  villeDepart     String?
+  villeArrivee    String?
+  dateDepart      String?
+  places          Int?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  offers          Offer[]
+  messages        ChatMessage[]
+}
+
+model Offer {
+  id           String   @id @default(cuid())
+  requestId    String
+  request      ServiceRequest @relation(fields: [requestId], references: [id])
+  driverId     String
+  driver       User     @relation(fields: [driverId], references: [id])
+  price        Float
+  etaMin       Int
+  status       String   // "en_attente", "acceptee", "refusee"
+  createdAt    DateTime @default(now())
+}
+
+model Transaction {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  type        String   // "topup", "cashout", "payment", "commission", "loan"
+  amount      Float
+  method      String   // "wave", "orange_money", "cash"
+  status      String   // "pending", "completed", "failed"
+  reference   String
+  description String
+  createdAt   DateTime @default(now())
+}
+
+model LoanRequest {
+  id          String   @id @default(cuid())
+  driverId    String
+  driver      User     @relation(fields: [driverId], references: [id])
+  montant     Float
+  motif       String
+  dureeMois   Int
+  mensualite  Float
+  status      String   // "en_attente", "approuve", "refuse", "rembourse", "en_cours"
+  createdAt   DateTime @default(now())
+}
+
+model ChatMessage {
+  id          String   @id @default(cuid())
+  requestId   String
+  request     ServiceRequest @relation(fields: [requestId], references: [id])
+  senderId    String
+  sender      User     @relation(fields: [senderId], references: [id])
+  text        String
+  createdAt   DateTime @default(now())
+}
+
+model PlatformSettings {
+  id             String @id @default("default")
+  commissionRate Float  @default(0.12)
+  taxRate        Float  @default(0.18)
+}
