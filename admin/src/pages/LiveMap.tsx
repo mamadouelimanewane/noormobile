@@ -4,7 +4,8 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { io } from 'socket.io-client';
 
-const socket = io('http://localhost:3001');
+const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const socket = io(SOCKET_URL);
 
 const carIcon = L.divIcon({
   className: 'noordrive-marker',
