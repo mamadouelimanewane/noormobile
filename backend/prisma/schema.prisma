@@ -41,6 +41,10 @@ model User {
   transactions        Transaction[]
   loans               LoanRequest[]
   messages            ChatMessage[]
+  
+  // Intercity Carpool Relations
+  carpoolTrips        CarpoolTrip[]
+  carpoolBookings     CarpoolBooking[]
 }
 
 model Vehicle {
@@ -168,4 +172,33 @@ model Tax {
   rate      Float
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
+}
+
+// --- COVOITURAGE INTERURBAIN ---
+model CarpoolTrip {
+  id           String   @id @default(cuid())
+  driverId     String
+  driver       User     @relation(fields: [driverId], references: [id])
+  villeDepart  String
+  villeArrivee String
+  dateDepart   DateTime
+  prixParPlace Float
+  placesTotales Int
+  placesReservees Int   @default(0)
+  status       String   @default("OPEN") // OPEN, FULL, COMPLETED, CANCELLED
+  createdAt    DateTime @default(now())
+
+  bookings     CarpoolBooking[]
+}
+
+model CarpoolBooking {
+  id           String   @id @default(cuid())
+  tripId       String
+  trip         CarpoolTrip @relation(fields: [tripId], references: [id])
+  passengerId  String
+  passenger    User     @relation(fields: [passengerId], references: [id])
+  placesBooked Int
+  totalPrice   Float
+  status       String   @default("CONFIRMED")
+  createdAt    DateTime @default(now())
 }

@@ -73,7 +73,10 @@ export default function Layout({ children, activeTab, onTabChange }: LayoutProps
               <div className="flex-1 overflow-y-auto py-4">
                 <nav className="space-y-1 px-3">
                   <button onClick={() => { onTabChange?.('demandes'); setMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${activeTab === 'demandes' ? 'bg-gray-100 text-black' : 'text-gray-600 hover:bg-gray-50'}`}>
-                    <Map className="w-5 h-5" /> Carte & Réservation
+                    <Map className="w-5 h-5" /> Carte & Réservation (VTC)
+                  </button>
+                  <button onClick={() => { onTabChange?.('covoiturage'); setMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${activeTab === 'covoiturage' ? 'bg-gray-100 text-black' : 'text-gray-600 hover:bg-gray-50'}`}>
+                    <Map className="w-5 h-5 text-blue-500" /> Covoiturage (Ville en ville)
                   </button>
                   <button onClick={() => { onTabChange?.('historique'); setMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${activeTab === 'historique' || activeTab === 'courses' ? 'bg-gray-100 text-black' : 'text-gray-600 hover:bg-gray-50'}`}>
                     <Clock className="w-5 h-5" /> Historique de courses

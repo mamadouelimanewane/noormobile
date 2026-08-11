@@ -110,6 +110,113 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+// --- COVOITURAGE INTERURBAIN APIS ---
+app.get('/api/carpool/trips', async (req, res) => {
+  try {
+    const { from, to, date } = req.query;
+    const trips = await prisma.carpoolTrip.findMany({
+      where: {
+        status: 'OPEN',
+        villeDepart: from as string,
+        villeArrivee: to as string,
+        // In a real app we'd filter >= date. For now, we return all OPEN for the route
+      },
+      include: {
+        driver: { select: { id: true, name: true, phone: true, rating: true, avatarColor: true, vehicle: true } }
+      },
+      orderBy: { dateDepart: 'asc' }
+    });
+    res.json(trips);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/carpool/trips', async (req, res) => {
+  try {
+    const { driverId, villeDepart, villeArrivee, dateDepart, prixParPlace, placesTotales } = req.body;
+    const trip = await prisma.carpoolTrip.create({
+      data: {
+        driverId, villeDepart, villeArrivee, 
+        dateDepart: new Date(dateDepart), 
+        prixParPlace, placesTotales
+      }
+    });
+    res.json(trip);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/carpool/book', async (req, res) => {
+  try {
+    const { tripId, passengerId, placesToBook } = req.body;
+    
+    // 1. Fetch trip
+    const trip = await prisma.carpoolTrip.findUnique({ where: { id: tripId } });
+    if (!trip) return res.status(404).json({ error: 'Trajet non trouvé' });
+    
+    // 2. Check seats
+    const availableSeats = trip.placesTotales - trip.placesReservees;
+    if (availableSeats < placesToBook) return res.status(400).json({ error: 'Pas assez de places disponibles' });
+    
+    const totalPrice = trip.prixParPlace * placesToBook;
+    
+    // 3. Check passenger wallet
+    const passenger = await prisma.user.findUnique({ where: { id: passengerId } });
+    if (!passenger || passenger.walletBalance < totalPrice) {
+      return res.status(400).json({ error: 'Solde insuffisant. Veuillez recharger votre portefeuille.' });
+    }
+    
+    // 4. Execute transaction in Prisma
+    const [updatedPassenger, updatedTrip, booking] = await prisma.$transaction([
+      // Deduct passenger
+      prisma.user.update({
+        where: { id: passengerId },
+        data: { walletBalance: { decrement: totalPrice } }
+      }),
+      // Credit driver
+      prisma.user.update({
+        where: { id: trip.driverId },
+        data: { walletBalance: { increment: totalPrice } }
+      }),
+      // Create Transaction log (Passenger)
+      prisma.transaction.create({
+        data: {
+          userId: passengerId, type: 'payment', amount: -totalPrice, method: 'wallet',
+          status: 'completed', reference: `BOOK-${Date.now()}`, description: `Réservation covoiturage vers ${trip.villeArrivee}`
+        }
+      }),
+      // Create Transaction log (Driver)
+      prisma.transaction.create({
+        data: {
+          userId: trip.driverId, type: 'payment', amount: totalPrice, method: 'wallet',
+          status: 'completed', reference: `TRIP-${Date.now()}`, description: `Gain covoiturage (Passager ID: ${passengerId})`
+        }
+      }),
+      // Update trip
+      prisma.carpoolTrip.update({
+        where: { id: tripId },
+        data: { 
+          placesReservees: { increment: placesToBook },
+          status: (trip.placesReservees + placesToBook) >= trip.placesTotales ? 'FULL' : 'OPEN'
+        }
+      }),
+      // Create Booking
+      prisma.carpoolBooking.create({
+        data: {
+          tripId, passengerId, placesBooked: placesToBook, totalPrice
+        }
+      })
+    ]);
+    
+    res.json({ ok: true, booking, newBalance: updatedPassenger.walletBalance });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+// --------------------
+
 // Admin routes
 app.get('/api/admin/settings', async (req, res) => {
   try {

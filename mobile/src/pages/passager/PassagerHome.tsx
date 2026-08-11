@@ -7,6 +7,8 @@ import OffersList from '../../components/OffersList';
 import TrackingPanel from '../../components/TrackingPanel';
 import MapView from '../../components/MapView';
 import ParrainageTab from '../../components/ParrainageTab';
+import Wallet from '../../components/Wallet';
+import PassengerCarpool from '../../components/PassengerCarpool';
 import { formatFcfa, distanceKm } from '../../lib/geo';
 import { CITY_COORDS } from '../../data/cities';
 import { VILLES_INTERCITY } from '../../types';
@@ -87,6 +89,8 @@ export default function PassagerHome() {
       <Layout activeTab={tab} onTabChange={setTab}>
         <div className="pt-16 max-w-xl mx-auto w-full">
           {tab === 'historique' && <HistoriqueTab requests={requests.filter((r) => r.passengerId === currentUser.id)} />}
+          {tab === 'portefeuille' && <Wallet />}
+          {tab === 'covoiturage' && <PassengerCarpool />}
           {tab === 'compte' && <CompteTab />}
           {tab === 'parrainage' && <ParrainageTab />}
         </div>

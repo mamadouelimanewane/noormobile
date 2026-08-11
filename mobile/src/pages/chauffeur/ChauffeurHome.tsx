@@ -9,6 +9,8 @@ import { Mic } from 'lucide-react';
 import { useSpeechToText } from '../../hooks/useSpeechToText';
 import type { Driver, ServiceRequest } from '../../types';
 import ParrainageTab from '../../components/ParrainageTab';
+import Wallet from '../../components/Wallet';
+import DriverCarpool from '../../components/DriverCarpool';
 
 const TYPE_LABEL: Record<string, string> = { ride: 'Course', delivery: 'Livraison', intercity: 'Ville à ville' };
 
@@ -89,7 +91,8 @@ export default function ChauffeurHome() {
           )}
           {tab === 'courses' && <CoursesTab requests={requests.filter((r) => r.driverId === driver.id)} />}
           {tab === 'revenus' && <RevenusTab />}
-          {tab === 'portefeuille' && <MoneyTab driverId={driver.id} />}
+          {tab === 'portefeuille' && <Wallet />}
+          {tab === 'covoiturage' && <DriverCarpool />}
           {tab === 'parrainage' && <ParrainageTab />}
         </div>
       </Layout>
