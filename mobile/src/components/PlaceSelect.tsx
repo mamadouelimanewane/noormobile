@@ -77,9 +77,9 @@ export default function PlaceSelect({ label, value, onChange }: PlaceSelectProps
                   setQuery('Recherche position...');
                   navigator.geolocation.getCurrentPosition(
                     (pos) => {
-                      setQuery('Ma position');
+                      setQuery('Ma position actuelle');
                       setIsOpen(false);
-                      onChange({ lat: pos.coords.latitude, lng: pos.coords.longitude, label: 'Ma position' });
+                      onChange({ lat: pos.coords.latitude, lng: pos.coords.longitude, label: 'Ma position actuelle' });
                     },
                     (err) => {
                       setQuery('');

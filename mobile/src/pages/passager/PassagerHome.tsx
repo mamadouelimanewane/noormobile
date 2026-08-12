@@ -166,7 +166,7 @@ function RideForm({ onCreate }: { onCreate: ReturnType<typeof useStore.getState>
   useEffect(() => {
     if (!pickup && 'geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition((pos) => {
-        setPickup({ lat: pos.coords.latitude, lng: pos.coords.longitude, label: 'Ma position' });
+        setPickup({ lat: pos.coords.latitude, lng: pos.coords.longitude, label: 'Ma position actuelle' });
       }, () => {}, { enableHighAccuracy: true });
     }
   }, []);
