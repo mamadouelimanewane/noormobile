@@ -1,0 +1,11 @@
+name: Keep-Alive
+on:
+  schedule:
+    - cron: '*/14 * * * *'
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render API
+        run: curl -s https://noordrive-api.onrender.com > /dev/null
