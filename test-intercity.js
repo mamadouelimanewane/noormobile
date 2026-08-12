@@ -1,8 +1,8 @@
 const axios = require('axios');
 const { io } = require('socket.io-client');
 
-const API_URL = 'http://localhost:3005/api';
-const SOCKET_URL = 'http://localhost:3005';
+const API_URL = 'https://noordrive-api.onrender.com/api';
+const SOCKET_URL = 'https://noordrive-api.onrender.com';
 
 async function runTest() {
   console.log('--- DEBUT DU TEST COVOITURAGE (INTERCITY) ---');
