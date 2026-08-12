@@ -17,8 +17,15 @@ export default function SocketManager() {
     socket.auth = { userId: currentUser.id };
     socket.connect();
 
-    const handleConnect = () => console.log('Socket connected');
-    
+    const handleConnect = () => {
+      console.log('Socket connected');
+      if (currentUser.role === 'chauffeur') {
+        const drivers = useStore.getState().drivers;
+        if (drivers[currentUser.id]?.isOnline) {
+          socket.emit('driver:online', { driverId: currentUser.id });
+        }
+      }
+    };
     const handleNewRequest = (req: ServiceRequest) => {
       if (currentUser.role === 'chauffeur') {
         const drivers = useStore.getState().drivers;
