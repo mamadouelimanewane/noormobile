@@ -58,7 +58,7 @@ app.post('/api/auth/login', async (req, res) => {
           phone,
           name,
           role,
-          accountStatus: role === 'chauffeur' ? 'PENDING' : 'APPROVED',
+          accountStatus: 'APPROVED', // Auto-validation for demonstration mode
           avatarColor: '#0a8f4c',
           referralCode: newCode,
           referredById: sponsor?.id || null,
@@ -111,7 +111,7 @@ app.post('/api/auth/login', async (req, res) => {
       if (user.role !== role && user.role !== 'both') {
         const updateData: any = { role: 'both' };
         if (role === 'chauffeur') {
-          updateData.accountStatus = 'PENDING';
+          updateData.accountStatus = 'APPROVED'; // Auto-validation for demonstration mode
           if (vehicle) {
             const existingVehicle = await prisma.vehicle.findUnique({ where: { driverId: user.id } });
             if (!existingVehicle) updateData.vehicle = { create: vehicle };
@@ -122,6 +122,10 @@ app.post('/api/auth/login', async (req, res) => {
       if (!user!.referralCode) {
         const newCode = 'NOOR-' + Math.random().toString(36).substring(2, 8).toUpperCase();
         user = await prisma.user.update({ where: { id: user!.id }, data: { referralCode: newCode } });
+      }
+
+      if (user!.accountStatus === 'PENDING') {
+        user = await prisma.user.update({ where: { id: user!.id }, data: { accountStatus: 'APPROVED' } });
       }
     }
     
