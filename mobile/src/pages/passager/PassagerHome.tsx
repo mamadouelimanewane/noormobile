@@ -106,7 +106,7 @@ export default function PassagerHome() {
         <MapView />
       </div>
       
-      <div className="absolute bottom-0 left-0 right-0 z-10 pointer-events-none md:relative md:z-0 md:p-6 md:h-full md:overflow-y-auto bg-gray-50/50">
+      <div className="absolute bottom-0 left-0 right-0 z-10 pointer-events-none md:inset-0 md:p-6 md:overflow-y-auto md:bg-gray-50">
         <div className="pointer-events-auto max-w-md mx-auto md:max-w-7xl md:w-full md:h-full">
           <motion.div 
             initial={{ y: '100%' }} animate={{ y: 0 }} 
