@@ -74,10 +74,10 @@ export const useStore = create<StoreState>()(
         set((s) => {
           const updates: any = { currentUser: user };
           if (user) {
-            if (user.role === 'chauffeur' || user.role === 'both') {
+            if (user.role === 'chauffeur') {
               updates.drivers = { ...s.drivers, [user.id]: { ...s.drivers[user.id], ...user } };
             }
-            if (user.role === 'passager' || user.role === 'both') {
+            if (user.role === 'passager') {
               updates.passengers = { ...s.passengers, [user.id]: { ...s.passengers[user.id], ...user } };
             }
           }
