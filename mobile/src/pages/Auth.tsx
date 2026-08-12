@@ -85,8 +85,8 @@ export default function Auth() {
   return (
     <div className="min-h-screen bg-[#f4f6f5] flex items-center justify-center px-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
-        <Link to="/" className="flex items-center gap-2 font-bold text-lg mb-6">
-          <span className="text-noordrive-green">●</span> NOORDRIVE
+        <Link to="/" className="flex justify-center mb-8">
+          <img src="/logo.png" alt="NOORDRIVER" className="h-12 object-contain" />
         </Link>
 
         <div className="flex bg-gray-100 rounded-full p-1 mb-6">
