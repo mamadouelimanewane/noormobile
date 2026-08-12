@@ -27,7 +27,7 @@ export default function Layout({ children, activeTab, onTabChange }: LayoutProps
       : undefined;
 
   return (
-    <div className="h-screen w-full flex flex-col bg-gray-50 overflow-hidden relative">
+    <div className="h-[100dvh] w-full flex flex-col bg-gray-50 overflow-hidden relative">
       {/* Floating Hamburger Button */}
       <button 
         onClick={() => setMenuOpen(true)}
