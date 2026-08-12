@@ -5,7 +5,7 @@ import { formatFcfa } from '../lib/geo';
 import { Wallet as WalletIcon, ArrowDownToLine, ArrowUpFromLine, Clock, SmartphoneNfc } from 'lucide-react';
 
 export default function Wallet() {
-  const user = useStore(s => s.user);
+  const currentUser = useStore((s) => s.currentUser);
   const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState<any[]>([]);
   
@@ -13,7 +13,7 @@ export default function Wallet() {
   const [showCashout, setShowCashout] = useState(false);
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState('wave');
-  const [phone, setPhone] = useState(user?.phone || '');
+  const [phone, setPhone] = useState(currentUser?.phone || '');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -22,7 +22,7 @@ export default function Wallet() {
 
   const fetchWallet = async () => {
     try {
-      const res = await api.get(`/wallet/history/${user?.id}`);
+      const res = await api.get(`/wallet/history/${currentUser?.id}`);
       setBalance(res.data.balance);
       setTransactions(res.data.transactions);
     } catch (err) {
@@ -35,7 +35,7 @@ export default function Wallet() {
     setLoading(true);
     try {
       const res = await api.post('/wallet/init-payment', {
-        userId: user?.id,
+        userId: currentUser?.id,
         amount: Number(amount),
         method,
         phone
@@ -69,7 +69,7 @@ export default function Wallet() {
     e.preventDefault();
     setLoading(true);
     try {
-      await api.post('/wallet/cashout', { userId: user?.id, amount: Number(amount), method, phone });
+      await api.post('/wallet/cashout', { userId: currentUser?.id, amount: Number(amount), method, phone });
       alert(`Demande de retrait envoyée pour ${formatFcfa(Number(amount))}`);
       setShowCashout(false);
       setAmount('');

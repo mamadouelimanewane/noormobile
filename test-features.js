@@ -1,8 +1,8 @@
 const axios = require('axios');
 const { io } = require('socket.io-client');
 
-const API_URL = 'https://noordrive-api.onrender.com/api';
-const SOCKET_URL = 'https://noordrive-api.onrender.com';
+const API_URL = 'http://localhost:3005/api';
+const SOCKET_URL = 'http://localhost:3005';
 
 async function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));

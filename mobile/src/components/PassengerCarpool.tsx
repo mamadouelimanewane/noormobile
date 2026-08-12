@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { api } from '../lib/api';
 import { useStore } from '../store/useStore';
 import { VILLES_INTERCITY } from '../types';
-import { Search, MapPin, Calendar, Users, Star, ArrowRight } from 'lucide-react';
+import { Search, MapPin, Calendar, ArrowRight } from 'lucide-react';
 import { formatFcfa } from '../lib/geo';
 
 export default function PassengerCarpool() {
-  const user = useStore(s => s.user);
+  const currentUser = useStore(s => s.currentUser);
   const [trips, setTrips] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [booking, setBooking] = useState(false);
@@ -35,7 +35,7 @@ export default function PassengerCarpool() {
     try {
       const res = await api.post('/carpool/book', {
         tripId,
-        passengerId: user?.id,
+        passengerId: currentUser?.id,
         placesToBook: places
       });
       alert('Réservation confirmée ! Solde restant : ' + formatFcfa(res.data.newBalance));

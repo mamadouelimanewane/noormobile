@@ -1,38 +1,75 @@
 import { useState } from 'react';
-import { ShieldCheck } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useStore } from '../store/useStore';
 
-export default function Login({ onLogin }: { onLogin: () => void }) {
-  const [password, setPassword] = useState('');
+export default function Login() {
+  const [phone, setPhone] = useState('admin');
+  const [password, setPassword] = useState('admin');
+  const [error, setError] = useState('');
+  
+  const navigate = useNavigate();
 
-  function handleLogin(e: React.FormEvent) {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'admin') {
-      onLogin();
+    if (phone === 'admin' && password === 'admin') {
+      // Pour le développement
+      if ('setCurrentUser' in useStore.getState()) {
+        (useStore.getState() as any).setCurrentUser({ id: 'admin', role: 'admin', name: 'Admin', phone: 'admin' });
+      }
+      navigate('/dashboard');
+    } else {
+      setError('Identifiants incorrects');
     }
-  }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f4f6f5] to-gray-200 flex items-center justify-center p-4">
-      <form onSubmit={handleLogin} className="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-sm border border-gray-100">
-        <div className="flex items-center justify-center mb-6">
-          <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center shadow-inner">
-            <ShieldCheck className="w-10 h-10 text-noordrive-black" />
-          </div>
+    <div className="min-h-screen bg-[#f4f6f5] flex items-center justify-center px-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
+            <span className="text-noordrive-green">●</span> NOORDRIVE ADMIN
+          </h1>
+          <p className="text-gray-500 mt-2">Connectez-vous au panneau de contrôle</p>
         </div>
-        <h1 className="text-3xl font-black text-center mb-2">NOORDRIVE</h1>
-        <p className="text-center text-gray-500 mb-8 font-medium">Administration Premium</p>
-        
-        <input
-          type="password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          placeholder="Mot de passe (admin)"
-          className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 mb-6 focus:ring-4 focus:ring-noordrive-green/20 focus:border-noordrive-green outline-none transition"
-        />
-        <button type="submit" className="w-full bg-noordrive-black text-white font-bold py-3.5 rounded-xl hover:bg-gray-800 transition shadow-lg">
-          Connexion Sécurisée
-        </button>
-      </form>
+
+        {error && (
+          <div className="bg-red-50 text-red-500 p-3 rounded-lg text-sm mb-4">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Identifiant Administrateur</label>
+            <input
+              type="text"
+              required
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-noordrive-black"
+              placeholder="Ex: admin"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-noordrive-black"
+              placeholder="••••••••"
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full bg-noordrive-black text-white font-bold py-3 rounded-xl hover:bg-gray-800 transition shadow-lg shadow-gray-200 mt-6"
+          >
+            Accéder au Dashboard
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 import { formatFcfa } from '../lib/geo';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Map, Wallet, Clock, LogOut, Gift, HelpCircle } from 'lucide-react';
+import { Menu, X, Map, Wallet, Clock, LogOut, Gift, HelpCircle, Users } from 'lucide-react';
 
 interface LayoutProps {
   children: ReactNode;

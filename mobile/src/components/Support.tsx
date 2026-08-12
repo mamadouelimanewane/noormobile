@@ -4,7 +4,7 @@ import { useStore } from '../store/useStore';
 import { HelpCircle, MessageSquare, Send, ChevronLeft, Clock, CheckCircle } from 'lucide-react';
 
 export default function Support() {
-  const user = useStore(s => s.user);
+  const currentUser = useStore((s) => s.currentUser);
   const [tickets, setTickets] = useState<any[]>([]);
   const [activeTicket, setActiveTicket] = useState<any>(null);
   const [showNew, setShowNew] = useState(false);
@@ -24,7 +24,7 @@ export default function Support() {
 
   const fetchTickets = async () => {
     try {
-      const res = await api.get(`/support/tickets/user/${user?.id}`);
+      const res = await api.get(`/support/tickets/currentUser/${currentUser?.id}`);
       setTickets(res.data);
     } catch (err) {
       console.error(err);
@@ -45,7 +45,7 @@ export default function Support() {
     setLoading(true);
     try {
       const res = await api.post('/support/tickets', {
-        userId: user?.id, subject, category, initialMessage: message
+        userId: currentUser?.id, subject, category, initialMessage: message
       });
       setShowNew(false);
       setSubject(''); setMessage('');
@@ -62,7 +62,7 @@ export default function Support() {
     if(!reply.trim()) return;
     try {
       await api.post(`/support/tickets/${activeTicket.id}/messages`, {
-        senderId: user?.id, text: reply, isAdmin: false
+        senderId: currentUser?.id, text: reply, isAdmin: false
       });
       setReply('');
       loadTicket(activeTicket.id);
@@ -86,7 +86,7 @@ export default function Support() {
         
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {activeTicket.messages.map((m: any) => {
-            const isMe = m.senderId === user?.id;
+            const isMe = m.senderId === currentUser?.id;
             return (
               <div key={m.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[85%] p-3 rounded-2xl ${isMe ? 'bg-noordrive-green text-white rounded-tr-none' : 'bg-white shadow-sm border border-gray-100 rounded-tl-none'}`}>

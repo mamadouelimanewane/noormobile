@@ -5,7 +5,6 @@ import Auth from './pages/Auth';
 import PassagerHome from './pages/passager/PassagerHome';
 import ChauffeurHome from './pages/chauffeur/ChauffeurHome';
 import PendingValidation from './pages/chauffeur/PendingValidation';
-import AdminHome from './pages/AdminHome';
 import { useEffect } from 'react';
 import ProtectedRoute from './components/ProtectedRoute';
 import LocationTracker from './components/LocationTracker';
@@ -13,18 +12,20 @@ import SocketManager from './components/SocketManager';
 import { useStore } from './store/useStore';
 
 export default function App() {
-  const { user } = useStore();
+  const { currentUser } = useStore();
 
   useEffect(() => {
     // Simulate Firebase Cloud Messaging (Push Notifications) initialization
-    if (user && !user.fcmToken) {
+    // @ts-ignore
+    if (currentUser && !currentUser.fcmToken) {
       if ('Notification' in window) {
         Notification.requestPermission().then(permission => {
           if (permission === 'granted') {
-            const mockToken = `fcm-token-${Math.random().toString(36).substring(2, 10)}`;
+            const mockToken = `token_${Math.random().toString(36).substr(2, 9)}`;
             import('./lib/api').then(({ api }) => {
-              api.post(`/users/${user.id}/fcm-token`, { token: mockToken }).then(() => {
-                useStore.getState().setUser({ ...user, fcmToken: mockToken });
+              api.post(`/users/${currentUser.id}/fcm-token`, { token: mockToken }).then(() => {
+                // @ts-ignore
+                useStore.getState().setCurrentUser({ ...currentUser, fcmToken: mockToken });
                 console.log('Push notifications enabled:', mockToken);
               }).catch(console.error);
             });
@@ -32,7 +33,7 @@ export default function App() {
         });
       }
     }
-  }, [user]);
+  }, [currentUser]);
 
   return (
     <BrowserRouter>
@@ -42,14 +43,6 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/connexion" element={<Auth />} />
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute role="admin">
-              <AdminHome />
-            </ProtectedRoute>
-          }
-        />
         <Route
           path="/passager"
           element={

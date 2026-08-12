@@ -17,7 +17,7 @@ import type { GeoPoint, ServiceType } from '../../types';
 
 
 export default function PassagerHome() {
-  const [tab, setTab] = useState('ride');
+  const [tab, setTab] = useState<string>('ride');
   const currentUser = useStore((s) => s.currentUser)!;
   const allRequests = useStore((s) => s.requests);
   const requests = useMemo(() => allRequests.filter((r) => r.passengerId === currentUser.id), [allRequests, currentUser.id]);
@@ -91,15 +91,14 @@ export default function PassagerHome() {
   }
 
   // Si on affiche Historique ou Portefeuille, on ne veut pas la carte en fond, ou on la masque
-  if (tab === 'historique' || tab === 'portefeuille' || tab === 'compte' || tab === 'parrainage' || tab === 'support') {
+  if (tab === 'historique' || tab === 'portefeuille' || tab === 'compte' || tab === 'parrainage' || tab === 'support' || tab === 'covoiturage') {
     return (
       <Layout activeTab={tab} onTabChange={setTab}>
         <div className="pt-16 max-w-xl mx-auto w-full">
-          {tab === 'historique' && <HistoriqueTab requests={requests.filter((r) => r.passengerId === currentUser.id)} />}
+          {tab === 'historique' && <Historique requests={requests.filter((r) => r.passengerId === currentUser.id)} />}
           {tab === 'portefeuille' && <Wallet />}
           {tab === 'covoiturage' && <PassengerCarpool />}
           {tab === 'support' && <Support />}
-          {tab === 'compte' && <CompteTab />}
           {tab === 'parrainage' && <ParrainageTab />}
         </div>
       </Layout>
@@ -391,95 +390,6 @@ function Historique({ requests }: { requests: ServiceRequestArray }) {
           </div>
         </div>
       ))}
-    </div>
-  );
-}
-
-function WalletTab() {
-  const currentUser = useStore((s) => s.currentUser);
-  const transactions = useStore((s) => s.transactions.filter(t => t.userId === currentUser?.id));
-  const settings = useStore((s) => s.settings);
-  const topupWallet = useStore((s) => s.topupWallet);
-  const [loading, setLoading] = useState(false);
-  const [selectedTx, setSelectedTx] = useState<any>(null);
-
-  async function handleTopup(method: 'wave' | 'orange_money') {
-    if (!currentUser) return;
-    setLoading(true);
-    await topupWallet(currentUser.id, 'passager', 10000, method);
-    setLoading(false);
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="bg-noordrive-black text-white p-6 rounded-2xl flex items-center justify-between shadow-xl">
-        <div>
-          <p className="text-gray-400 text-sm">Solde actuel</p>
-          <h2 className="text-3xl font-bold mt-1">{formatFcfa(currentUser?.walletBalance || 0)}</h2>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={() => handleTopup('wave')} disabled={loading} className="bg-[#1cc6f4] text-white px-4 py-2 rounded-xl font-bold flex items-center shadow-lg hover:brightness-110 transition disabled:opacity-50">
-            Recharger 10 000F (Wave)
-          </button>
-          <button onClick={() => handleTopup('orange_money')} disabled={loading} className="bg-[#ff6600] text-white px-4 py-2 rounded-xl font-bold flex items-center shadow-lg hover:brightness-110 transition disabled:opacity-50">
-            Recharger 10 000F (OM)
-          </button>
-        </div>
-      </div>
-      <div>
-        <h3 className="font-bold text-lg mb-4">Historique & Reçus</h3>
-        {transactions.length === 0 ? (
-          <p className="text-gray-400 text-sm text-center py-10">Aucune transaction.</p>
-        ) : (
-          <div className="space-y-3">
-            {transactions.map(t => (
-              <div key={t.id} className="bg-white border rounded-xl p-4 flex items-center justify-between">
-                <div>
-                  <div className="font-medium">{t.description}</div>
-                  <div className="text-xs text-gray-500">{new Date(t.createdAt).toLocaleString('fr-FR')} · Réf: {t.reference}</div>
-                </div>
-                <div className="text-right">
-                  <div className={`font-bold ${t.amount > 0 ? 'text-noordrive-green' : 'text-noordrive-black'}`}>
-                    {t.amount > 0 ? '+' : ''}{formatFcfa(t.amount)}
-                  </div>
-                  <div className="text-xs opacity-75">{t.status === 'pending' ? 'En attente...' : 'Terminé'}</div>
-                  {t.type === 'payment' && (
-                    <button onClick={() => setSelectedTx(t)} className="text-xs text-blue-600 font-medium hover:underline mt-1 block w-full text-right">Télécharger Facture</button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {selectedTx && (
-        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 relative">
-            <button onClick={() => setSelectedTx(null)} className="absolute top-4 right-4 text-gray-500 text-xl">&times;</button>
-            
-            <div className="text-center mb-6 border-b pb-4">
-              <h2 className="text-2xl font-black italic tracking-tighter">NOOR<span className="text-noordrive-gold">DRIVE</span></h2>
-              <p className="text-sm text-gray-500 mt-1">Reçu de paiement électronique</p>
-            </div>
-            
-            <div className="space-y-3 text-sm mb-6">
-              <div className="flex justify-between"><span className="text-gray-500">Date</span><span className="font-medium">{new Date(selectedTx.createdAt).toLocaleString('fr-FR')}</span></div>
-              <div className="flex justify-between"><span className="text-gray-500">N° Facture</span><span className="font-medium">{selectedTx.reference}</span></div>
-              <div className="flex justify-between"><span className="text-gray-500">Passager</span><span className="font-medium">{currentUser?.name}</span></div>
-              <div className="flex justify-between"><span className="text-gray-500">Description</span><span className="font-medium">{selectedTx.description}</span></div>
-            </div>
-
-            <div className="bg-gray-50 p-4 rounded-xl space-y-2 mb-6">
-              <div className="flex justify-between text-sm"><span className="text-gray-600">Montant HT</span><span className="font-medium">{formatFcfa(Math.abs(selectedTx.amount) / (1 + settings.taxRate))}</span></div>
-              <div className="flex justify-between text-sm"><span className="text-gray-600">TVA ({settings.taxRate * 100}%)</span><span className="font-medium">{formatFcfa(Math.abs(selectedTx.amount) - (Math.abs(selectedTx.amount) / (1 + settings.taxRate)))}</span></div>
-              <div className="border-t pt-2 mt-2 flex justify-between"><span className="font-bold">Total TTC payé</span><span className="font-bold text-lg">{formatFcfa(Math.abs(selectedTx.amount))}</span></div>
-            </div>
-
-            <button onClick={() => window.print()} className="w-full bg-noordrive-black text-white font-bold py-3 rounded-xl hover:brightness-110">Imprimer le reçu</button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

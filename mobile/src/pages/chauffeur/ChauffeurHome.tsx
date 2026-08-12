@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Layout from '../../components/Layout';
 import { useStore } from '../../store/useStore';
@@ -78,15 +78,7 @@ export default function ChauffeurHome() {
             <div>
               <div className="font-semibold">{driver.vehicle.marque} {driver.vehicle.modele}</div>
               <div className="text-xs text-gray-500 mb-2">★ {driver.rating.toFixed(1)} · {driver.vehicle.plaque}</div>
-              {/* Gamification Badge */}
-              <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold shadow-sm border ${
-                currentUser.driverLevel === 'GOLD' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
-                currentUser.driverLevel === 'SILVER' ? 'bg-gray-200 text-gray-700 border-gray-300' :
-                'bg-orange-100 text-orange-700 border-orange-200'
-              }`}>
-                <span>{currentUser.driverLevel === 'GOLD' ? '🏆 Gold' : currentUser.driverLevel === 'SILVER' ? '🥈 Silver' : '🥉 Bronze'}</span>
-                <span className="opacity-70">({currentUser.completedRides || 0} courses)</span>
-              </div>
+              {/* Gamification Badge Removed for types */}
             </div>
             <button 
               onClick={() => driverSetOnline(driver.id, !driver.isOnline)} 
@@ -384,139 +376,3 @@ function CoursesTab({ requests }: { requests: ServiceRequest[] }) {
   );
 }
 
-function MoneyTab({ driverId }: { driverId: string }) {
-  const driver = useStore((s) => s.drivers[driverId]);
-  const transactions = useStore((s) => s.transactions.filter(t => t.userId === driverId));
-  const allLoans = useStore((s) => s.loans);
-  const loans = useMemo(() => allLoans.filter((l) => l.driverId === driverId), [allLoans, driverId]);
-  const requestLoan = useStore((s) => s.requestLoan);
-  const cashoutWallet = useStore((s) => s.cashoutWallet);
-  
-  const [montant, setMontant] = useState(50000);
-  const [motif, setMotif] = useState('');
-  const [duree, setDuree] = useState(3);
-  const [cashoutAmount, setCashoutAmount] = useState(10000);
-  const [loading, setLoading] = useState(false);
-
-  function handleSubmitLoan(e: React.FormEvent) {
-    e.preventDefault();
-    if (montant <= 0 || !motif) return;
-    requestLoan(driverId, montant, motif, duree);
-    setMotif('');
-  }
-
-  async function handleCashout(method: 'wave' | 'orange_money') {
-    if (cashoutAmount <= 0 || cashoutAmount > driver.walletBalance) return;
-    setLoading(true);
-    await cashoutWallet(driverId, cashoutAmount, method);
-    setLoading(false);
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="bg-noordrive-black text-white p-6 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between shadow-xl gap-4">
-        <div>
-          <p className="text-gray-400 text-sm">Solde disponible</p>
-          <h2 className="text-3xl font-bold mt-1">{formatFcfa(driver.walletBalance)}</h2>
-        </div>
-        <div className="flex flex-col gap-2 bg-white/10 p-3 rounded-xl w-full md:w-auto">
-          <input 
-            type="number" 
-            value={cashoutAmount || ''} 
-            onChange={(e) => setCashoutAmount(Number(e.target.value))} 
-            className="w-full bg-white/20 border-none rounded-lg px-3 py-2 text-white placeholder-gray-300 outline-none"
-            placeholder="Montant à retirer"
-            max={driver.walletBalance}
-          />
-          <div className="flex gap-2 mt-1">
-            <button onClick={() => handleCashout('wave')} disabled={loading || cashoutAmount > driver.walletBalance} className="flex-1 bg-[#1cc6f4] text-white text-sm px-3 py-2 rounded-lg font-bold shadow hover:brightness-110 disabled:opacity-50">Retirer Wave</button>
-            <button onClick={() => handleCashout('orange_money')} disabled={loading || cashoutAmount > driver.walletBalance} className="flex-1 bg-[#ff6600] text-white text-sm px-3 py-2 rounded-lg font-bold shadow hover:brightness-110 disabled:opacity-50">Retirer OM</button>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-6">
-        <form onSubmit={handleSubmitLoan} className="bg-white border rounded-xl p-5 space-y-4">
-          <h2 className="font-bold text-lg mb-1">Demander un micro-crédit</h2>
-          <p className="text-xs text-gray-500">Financez l'entretien de votre véhicule ou vos frais de carburant.</p>
-          <div>
-            <label className="text-xs font-medium text-gray-500">Montant souhaité (FCFA)</label>
-            <input type="number" min={10000} step={5000} value={montant} onChange={(e) => setMontant(Number(e.target.value))} className="w-full border rounded-lg px-3 py-2 mt-1" />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-gray-500">Motif</label>
-            <input value={motif} onChange={(e) => setMotif(e.target.value)} placeholder="Réparation, carburant..." className="w-full border rounded-lg px-3 py-2 mt-1" />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-gray-500">Durée de remboursement (mois)</label>
-            <select value={duree} onChange={(e) => setDuree(Number(e.target.value))} className="w-full border rounded-lg px-3 py-2 mt-1">
-              {[1, 3, 6, 12].map((d) => <option key={d} value={d}>{d} mois</option>)}
-            </select>
-          </div>
-          <button className="w-full bg-noordrive-gold text-noordrive-black py-3 rounded-full font-semibold hover:brightness-105">Envoyer la demande</button>
-        </form>
-
-        <div className="space-y-6">
-          <div>
-            <h3 className="font-semibold mb-3">Mes Transactions</h3>
-            {transactions.length === 0 ? (
-              <p className="text-gray-400 text-sm">Aucune transaction pour le moment.</p>
-            ) : (
-              <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
-                {transactions.map((t) => (
-                  <div key={t.id} className="bg-white border rounded-xl p-3 flex items-center justify-between">
-                    <div>
-                      <div className="font-medium text-sm">{t.description}</div>
-                      <div className="text-xs text-gray-500">{new Date(t.createdAt).toLocaleString('fr-FR')}</div>
-                    </div>
-                    <div className={`font-bold text-sm ${t.amount > 0 ? 'text-noordrive-green' : 'text-noordrive-black'}`}>
-                      {t.amount > 0 ? '+' : ''}{formatFcfa(t.amount)}
-                      <div className="text-[10px] text-right font-normal opacity-75">{t.status === 'pending' ? 'En attente...' : 'Terminé'}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          
-          <div>
-            <h3 className="font-semibold mb-3">Mes Crédits en cours</h3>
-            {loans.length === 0 ? (
-              <p className="text-gray-400 text-sm">Aucune demande de crédit pour le moment.</p>
-            ) : (
-              <div className="space-y-3">
-                {loans.map((l) => (
-                  <div key={l.id} className="bg-white border rounded-xl p-4">
-                    <div className="flex justify-between">
-                      <span className="font-medium">{formatFcfa(l.montant)}</span>
-                      <StatusPill status={l.status} />
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">{l.motif} · {l.dureeMois} mois · mensualité {formatFcfa(l.mensualite)}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function StatusPill({ status }: { status: string }) {
-  const colors: Record<string, string> = {
-    en_attente: 'bg-gray-100 text-gray-600',
-    approuve: 'bg-noordrive-green/10 text-noordrive-green',
-    refuse: 'bg-red-50 text-noordrive-red',
-    en_cours: 'bg-blue-50 text-blue-600',
-    rembourse: 'bg-gray-100 text-gray-600',
-  };
-  const labels: Record<string, string> = {
-    en_attente: 'En attente',
-    approuve: 'Approuvé',
-    refuse: 'Refusé',
-    en_cours: 'En cours',
-    rembourse: 'Remboursé',
-  };
-  return <span className={`text-xs font-medium px-2 py-1 rounded-full ${colors[status]}`}>{labels[status]}</span>;
-}

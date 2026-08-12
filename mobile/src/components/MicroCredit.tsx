@@ -5,7 +5,7 @@ import { formatFcfa } from '../lib/geo';
 import { Landmark, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 
 export default function MicroCredit() {
-  const user = useStore(s => s.user);
+  const currentUser = useStore((s) => s.currentUser);
   const [loans, setLoans] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ montant: 50000, motif: 'Entretien véhicule', dureeMois: 3 });
@@ -17,7 +17,7 @@ export default function MicroCredit() {
 
   const fetchLoans = async () => {
     try {
-      const res = await api.get(`/loans/driver/${user?.id}`);
+      const res = await api.get(`/loans/driver/${currentUser?.id}`);
       setLoans(res.data);
     } catch (err) {
       console.error(err);
@@ -29,7 +29,7 @@ export default function MicroCredit() {
     setLoading(true);
     try {
       await api.post('/loans/request', {
-        driverId: user?.id,
+        driverId: currentUser?.id,
         montant: Number(form.montant),
         motif: form.motif,
         dureeMois: Number(form.dureeMois)

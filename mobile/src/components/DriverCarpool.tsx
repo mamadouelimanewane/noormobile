@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
 import { useStore } from '../store/useStore';
 import { VILLES_INTERCITY } from '../types';
-import { MapPin, Calendar, Users, DollarSign, PlusCircle } from 'lucide-react';
+import { Calendar, Users, PlusCircle } from 'lucide-react';
 import { formatFcfa } from '../lib/geo';
 
 export default function DriverCarpool() {
-  const user = useStore(s => s.user);
+  const currentUser = useStore(s => s.currentUser);
   const [trips, setTrips] = useState<any[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -28,7 +28,7 @@ export default function DriverCarpool() {
     try {
       // Pour l'instant on fetch tout et on filtre (Dans une vraie app, endpoint spécifique)
       const res = await api.get('/carpool/trips?from=&to=&date=');
-      setTrips(res.data.filter((t: any) => t.driverId === user?.id));
+      setTrips(res.data.filter((t: any) => t.driverId === currentUser?.id));
     } catch (e) {
       console.error(e);
     }
@@ -40,7 +40,7 @@ export default function DriverCarpool() {
     try {
       const dateTime = new Date(`${form.dateDepart}T${form.timeDepart}`);
       await api.post('/carpool/trips', {
-        driverId: user?.id,
+        driverId: currentUser?.id,
         villeDepart: form.villeDepart,
         villeArrivee: form.villeArrivee,
         dateDepart: dateTime.toISOString(),

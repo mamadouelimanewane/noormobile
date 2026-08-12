@@ -211,7 +211,7 @@ app.post('/api/wallet/topup', async (req, res) => {
         status: 'completed', reference: `TOPUP-${Date.now()}`, description: `Rechargement via ${method || 'Mobile Money'}`
       }
     });
-    res.json({ ok: true, balance: user.walletBalance });
+    res.json({ ok: true, user, balance: user.walletBalance });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -237,10 +237,10 @@ app.post('/api/wallet/cashout', async (req, res) => {
     await prisma.transaction.create({
       data: {
         userId, type: 'cashout', amount: -amount, method: method || 'mobile_money',
-        status: 'pending', reference: `CASH-${Date.now()}`, description: `Retrait vers ${phone} (Frais: ${feeAmount} FCFA)`
+        status: 'completed', reference: `CASHOUT-${Date.now()}`, description: `Retrait via ${method || 'Mobile Money'}`
       }
     });
-    res.json({ ok: true, balance: updatedUser.walletBalance });
+    res.json({ ok: true, user: updatedUser, balance: updatedUser.walletBalance });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -761,8 +761,7 @@ app.get('/api/admin/documents', async (req, res) => {
   }
 });
 
-// Wallet routes
-app.post('/api/wallet/topup', async (req, res) => {
+app.post('/api/wallet/topup_v2', async (req, res) => {
   try {
     const { userId, amount, method } = req.body;
     const user = await prisma.user.update({
@@ -786,7 +785,7 @@ app.post('/api/wallet/topup', async (req, res) => {
   }
 });
 
-app.post('/api/wallet/cashout', async (req, res) => {
+app.post('/api/wallet/cashout_v2', async (req, res) => {
   try {
     const { userId, amount, method } = req.body;
     const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -804,8 +803,8 @@ app.post('/api/wallet/cashout', async (req, res) => {
         amount: -amount,
         method,
         status: 'completed',
-        reference: `CASHOUT-${Date.now()}`,
-        description: `Retrait vers ${method}`
+        reference: `CASH-${Date.now()}`,
+        description: `Retrait via ${method}`
       }
     });
     res.json({ ok: true, user: updatedUser, transaction: tx });

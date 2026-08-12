@@ -58,12 +58,7 @@ export default function Auth() {
     setError('');
 
     if (role === 'admin') {
-      if ('setCurrentUser' in useStore.getState()) {
-        (useStore.getState() as any).setCurrentUser({ id: 'admin', role: 'admin', name: 'Admin', phone: 'admin' });
-      } else {
-        (useStore.getState() as any).login('admin', 'admin');
-      }
-      return navigate('/admin');
+      return setError('L\'accès administrateur a été déplacé vers le portail dédié.');
     }
 
     try {
@@ -94,7 +89,7 @@ export default function Auth() {
         </Link>
 
         <div className="flex bg-gray-100 rounded-full p-1 mb-6">
-          {(['passager', 'chauffeur', 'admin'] as Role[]).map((r) => (
+          {(['passager', 'chauffeur'] as Role[]).map((r) => (
             <button
               key={r}
               onClick={() => setRole(r)}
