@@ -79,20 +79,8 @@ export default function Auth() {
     } catch (err: any) {
       const msg = err.response?.data?.error || err.message || 'Erreur de connexion';
       setError(typeof msg === 'string' ? msg : JSON.stringify(msg));
-    }
-  }
-
-  const [bgColor, setBgColor] = useState(1);
-
-  const getBgClass = () => {
-    if (bgColor === 1) return 'bg-[#f4f6f5]';
-    if (bgColor === 2) return 'bg-noordrive-black';
-    if (bgColor === 3) return 'bg-[#e0f5e9]'; // Light green
-    return 'bg-[#f4f6f5]';
-  };
-
   return (
-    <div className={`min-h-screen ${getBgClass()} flex items-center justify-center px-4 transition-colors duration-500`}>
+    <div className="min-h-screen bg-noordrive-black flex items-center justify-center px-4 transition-colors duration-500">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
         <Link to="/" className="flex justify-center mb-8">
           <img src="/logo.png" alt="NOORDRIVER" className="h-12 object-contain" />
@@ -204,19 +192,6 @@ export default function Auth() {
             </button>
           </form>
         )}
-      </div>
-
-      {/* Floating Selector for Background Colors (Dev/Demo Only) */}
-      <div className="fixed bottom-6 right-6 z-50 bg-white/90 backdrop-blur-md border border-gray-200 p-2 rounded-2xl shadow-2xl flex gap-2">
-        {[1, 2, 3].map(v => (
-          <button 
-            key={v}
-            onClick={() => setBgColor(v)}
-            className={`w-10 h-10 rounded-full font-bold flex items-center justify-center transition-all ${bgColor === v ? 'bg-noordrive-green text-white shadow-lg scale-110' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
-          >
-            {v}
-          </button>
-        ))}
       </div>
     </div>
   );
