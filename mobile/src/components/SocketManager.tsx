@@ -102,12 +102,22 @@ export default function SocketManager() {
       });
     };
 
+    const handleRideCreated = (req: ServiceRequest) => {
+      useStore.setState(s => {
+        if (!s.requests.find(r => r.id === req.id)) {
+          return { requests: [req, ...s.requests] };
+        }
+        return s;
+      });
+    };
+
     socket.on('connect', handleConnect);
     socket.on('ride:new_request', handleNewRequest);
     socket.on('ride:new_offer', handleNewOffer);
     socket.on('ride:accepted', handleRideAccepted);
     socket.on('ride:updated', handleRideUpdated);
     socket.on('ride:cancelled', handleRideCancelled);
+    socket.on('ride:created', handleRideCreated);
 
     return () => {
       socket.off('connect', handleConnect);
@@ -116,6 +126,7 @@ export default function SocketManager() {
       socket.off('ride:accepted', handleRideAccepted);
       socket.off('ride:updated', handleRideUpdated);
       socket.off('ride:cancelled', handleRideCancelled);
+      socket.off('ride:created', handleRideCreated);
     };
   }, [currentUser]);
 
