@@ -210,7 +210,7 @@ function RideForm({ onCreate }: { onCreate: ReturnType<typeof useStore.getState>
           Envoyer ma demande
         </button>
       </form>
-      <div className="h-72 md:h-full min-h-72">
+      <div className="h-72 md:h-[600px] w-full rounded-2xl overflow-hidden shadow-sm border border-gray-100">
         <MapView pickup={pickup ?? undefined} dropoff={dropoff ?? undefined} onMapClick={handleMapClick} nearbyCars={nearbyCars} />
       </div>
     </div>
@@ -288,7 +288,7 @@ function DeliveryForm({ onCreate }: { onCreate: ReturnType<typeof useStore.getSt
           Envoyer ma demande
         </button>
       </form>
-      <div className="h-72 md:h-full min-h-72">
+      <div className="h-72 md:h-[600px] w-full rounded-2xl overflow-hidden shadow-sm border border-gray-100">
         <MapView pickup={pickup ?? undefined} dropoff={dropoff ?? undefined} onMapClick={handleMapClick} nearbyCars={nearbyCars} />
       </div>
     </div>
@@ -356,7 +356,7 @@ function IntercityForm({ onCreate }: { onCreate: ReturnType<typeof useStore.getS
           Envoyer ma demande
         </button>
       </form>
-      <div className="h-72 md:h-full min-h-72">
+      <div className="h-72 md:h-[600px] w-full rounded-2xl overflow-hidden shadow-sm border border-gray-100">
         <MapView pickup={pickup} dropoff={dropoff} center={pickup} />
       </div>
     </div>

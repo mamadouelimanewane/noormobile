@@ -134,8 +134,6 @@ export default function Auth() {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === 'inscription' && (
-              <div>
-                <label className="text-xs font-medium text-gray-500">Nom complet</label>
               <>
                 <div>
                   <label className="text-xs font-medium text-gray-500">Nom complet</label>
