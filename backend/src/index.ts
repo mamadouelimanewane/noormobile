@@ -913,6 +913,8 @@ io.on('connection', (socket) => {
 
     const formattedReq = {
       ...req,
+      pickup: { lat: req.pickupLat, lng: req.pickupLng, label: req.pickupLabel },
+      dropoff: { lat: req.dropoffLat, lng: req.dropoffLng, label: req.dropoffLabel },
       offers: [],
       packageInfo,
       intercityInfo,
