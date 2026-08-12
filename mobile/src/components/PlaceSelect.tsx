@@ -70,6 +70,32 @@ export default function PlaceSelect({ label, value, onChange }: PlaceSelectProps
       />
       {isOpen && (results.length > 0 || !query) && (
         <ul className="absolute z-50 left-0 right-0 top-[100%] bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto mt-1">
+          {results.length === 0 && !query && (
+            <li
+              onClick={() => {
+                if ('geolocation' in navigator) {
+                  setQuery('Recherche position...');
+                  navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                      setQuery('Ma position');
+                      setIsOpen(false);
+                      onChange({ lat: pos.coords.latitude, lng: pos.coords.longitude, label: 'Ma position' });
+                    },
+                    (err) => {
+                      setQuery('');
+                      alert('Erreur de géolocalisation: ' + err.message);
+                    },
+                    { enableHighAccuracy: true }
+                  );
+                } else {
+                  alert('Géolocalisation non supportée par votre appareil.');
+                }
+              }}
+              className="px-3 py-3 border-b hover:bg-gray-50 cursor-pointer text-sm flex items-center gap-2 text-blue-600 font-semibold"
+            >
+              <span className="text-xl">📍</span> Utiliser ma position actuelle
+            </li>
+          )}
           {results.length === 0 && !query && savedPlaces.map((sp, i) => (
             <li
               key={`saved-${i}`}
