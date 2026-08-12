@@ -27,7 +27,7 @@ export default function ChauffeurHome() {
 
   const myActives = requests.filter(
     (r) =>
-      r.driverId === driver.id &&
+      r.driverId === driver?.id &&
       r.status !== 'annule' &&
       (r.status !== 'termine' || !r.ratingPassenger)
   );
@@ -39,7 +39,7 @@ export default function ChauffeurHome() {
   const available = requests.filter(
     (r) =>
       (r.status === 'recherche' || r.status === 'negociation') &&
-      !r.offers.some((o) => o.driverId === driver.id) &&
+      !r.offers.some((o) => o.driverId === driver?.id) &&
       (!isIntercityRide || (r.type === 'intercity' && r.intercityInfo?.villeArrivee === intercityDestination))
   );
 
@@ -70,35 +70,35 @@ export default function ChauffeurHome() {
   }
 
   // Dashboard hors ligne ou autres onglets
-  if (!driver.isOnline || tab !== 'demandes') {
+  if (!driver || !driver.isOnline || tab !== 'demandes') {
     return (
       <Layout activeTab={tab} onTabChange={setTab}>
         <div className="pt-16 max-w-xl mx-auto w-full">
           <div className="flex items-center justify-between mb-5 bg-white border rounded-xl p-4 shadow-sm">
             <div>
-              <div className="font-semibold">{driver.vehicle.marque} {driver.vehicle.modele}</div>
-              <div className="text-xs text-gray-500 mb-2">★ {driver.rating.toFixed(1)} · {driver.vehicle.plaque}</div>
+              <div className="font-semibold">{driver?.vehicle?.marque || 'Véhicule'} {driver?.vehicle?.modele || 'Standard'}</div>
+              <div className="text-xs text-gray-500 mb-2">★ {driver?.rating?.toFixed(1) || '5.0'} · {driver?.vehicle?.plaque || 'Non défini'}</div>
               {/* Gamification Badge Removed for types */}
             </div>
             <button 
-              onClick={() => driverSetOnline(driver.id, !driver.isOnline)} 
-              className={`px-5 py-2 rounded-full font-bold text-white transition ${driver.isOnline ? 'bg-noordrive-red' : 'bg-noordrive-green'}`}
+              onClick={() => driver && driverSetOnline(driver.id, !driver.isOnline)} 
+              className={`px-5 py-2 rounded-full font-bold text-white transition ${driver?.isOnline ? 'bg-noordrive-red' : 'bg-noordrive-green'}`}
             >
-              {driver.isOnline ? 'Passer Hors ligne' : 'Passer En ligne'}
+              {driver?.isOnline ? 'Passer Hors ligne' : 'Passer En ligne'}
             </button>
           </div>
 
-          {tab === 'demandes' && !driver.isOnline && (
+          {tab === 'demandes' && (!driver || !driver.isOnline) && (
             <div className="bg-gray-100 p-8 rounded-2xl text-center">
               <h2 className="text-xl font-bold mb-2">Vous êtes hors ligne</h2>
               <p className="text-sm text-gray-500">Passez en ligne pour recevoir des courses et augmenter vos revenus aujourd'hui.</p>
             </div>
           )}
-          {tab === 'courses' && <CoursesTab requests={requests.filter((r) => r.driverId === driver.id)} />}
+          {tab === 'courses' && <CoursesTab requests={requests.filter((r) => r.driverId === currentUser.id)} />}
           {tab === 'revenus' && <RevenusTab />}
           {tab === 'portefeuille' && <Wallet />}
           {tab === 'microcredit' && <MicroCredit />}
-          {tab === 'tontine' && <TontineTab driver={driver} />}
+          {tab === 'tontine' && driver && <TontineTab driver={driver} />}
           {tab === 'covoiturage' && <DriverCarpool />}
           {tab === 'support' && <Support />}
           {tab === 'parrainage' && <ParrainageTab />}

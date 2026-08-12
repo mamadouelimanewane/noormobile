@@ -43,7 +43,7 @@ app.get('/api/health', (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   const { phone, role, name, vehicle, referralCode } = req.body;
   try {
-    let user = await prisma.user.findUnique({ where: { phone } });
+    let user = await prisma.user.findUnique({ where: { phone }, include: { vehicle: true } });
     if (!user) {
       if (!name) return res.status(400).json({ error: 'Name required for registration' });
       
@@ -65,7 +65,8 @@ app.post('/api/auth/login', async (req, res) => {
           vehicle: role === 'chauffeur' && vehicle ? {
             create: vehicle
           } : undefined
-        }
+        },
+        include: { vehicle: true }
       });
 
       if (sponsor) {
@@ -105,7 +106,7 @@ app.post('/api/auth/login', async (req, res) => {
             }
           })
         ]);
-        user = await prisma.user.findUnique({ where: { id: user.id } }) as any;
+        user = await prisma.user.findUnique({ where: { id: user.id }, include: { vehicle: true } }) as any;
       }
     } else {
       if (user.role !== role && user.role !== 'both') {
@@ -117,15 +118,15 @@ app.post('/api/auth/login', async (req, res) => {
             if (!existingVehicle) updateData.vehicle = { create: vehicle };
           }
         }
-        user = (await prisma.user.update({ where: { id: user.id }, data: updateData })) as any;
+        user = (await prisma.user.update({ where: { id: user.id }, data: updateData, include: { vehicle: true } })) as any;
       }
       if (!user!.referralCode) {
         const newCode = 'NOOR-' + Math.random().toString(36).substring(2, 8).toUpperCase();
-        user = await prisma.user.update({ where: { id: user!.id }, data: { referralCode: newCode } });
+        user = await prisma.user.update({ where: { id: user!.id }, data: { referralCode: newCode }, include: { vehicle: true } });
       }
 
       if (user!.accountStatus === 'PENDING') {
-        user = await prisma.user.update({ where: { id: user!.id }, data: { accountStatus: 'APPROVED' } });
+        user = await prisma.user.update({ where: { id: user!.id }, data: { accountStatus: 'APPROVED' }, include: { vehicle: true } });
       }
     }
     
