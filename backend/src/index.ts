@@ -108,14 +108,25 @@ app.post('/api/auth/login', async (req, res) => {
         user = await prisma.user.findUnique({ where: { id: user.id } }) as any;
       }
     } else {
-      if (user.role !== role) {
-        return res.status(400).json({ error: 'Role mismatch' });
+      if (user.role !== role && user.role !== 'both') {
+        const updateData: any = { role: 'both' };
+        if (role === 'chauffeur') {
+          updateData.accountStatus = 'PENDING';
+          if (vehicle) {
+            const existingVehicle = await prisma.vehicle.findUnique({ where: { driverId: user.id } });
+            if (!existingVehicle) updateData.vehicle = { create: vehicle };
+          }
+        }
+        user = (await prisma.user.update({ where: { id: user.id }, data: updateData })) as any;
       }
       if (!user.referralCode) {
         const newCode = 'NOOR-' + Math.random().toString(36).substring(2, 8).toUpperCase();
         user = await prisma.user.update({ where: { id: user.id }, data: { referralCode: newCode } });
       }
     }
+    
+    // Override role in response to match the requested session role
+    user.role = role;
     res.json({ ok: true, user });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -642,7 +653,7 @@ app.delete('/api/admin/users/:id', async (req, res) => {
 
 app.get('/api/admin/pending-drivers', async (req, res) => {
   try {
-    const users = await prisma.user.findMany({ where: { role: 'chauffeur', accountStatus: 'PENDING' }, include: { vehicle: true } });
+    const users = await prisma.user.findMany({ where: { role: { in: ['chauffeur', 'both'] }, accountStatus: 'PENDING' }, include: { vehicle: true } });
     res.json({ users });
   } catch (err: any) {
     res.status(500).json({ error: err.message });

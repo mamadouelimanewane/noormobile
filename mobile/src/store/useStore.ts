@@ -366,7 +366,8 @@ export const useStore = create<StoreState>()(
         try {
           const res = await api.post('/wallet/topup', { userId, role, amount, method });
           if (res.data.ok) {
-            set({ currentUser: res.data.user });
+            const currentRole = get().currentUser?.role;
+            set({ currentUser: { ...res.data.user, role: currentRole || res.data.user.role } });
             return true;
           }
           return false;
@@ -380,7 +381,8 @@ export const useStore = create<StoreState>()(
         try {
           const res = await api.post('/wallet/cashout', { userId: driverId, amount, method });
           if (res.data.ok) {
-            set({ currentUser: res.data.user });
+            const currentRole = get().currentUser?.role;
+            set({ currentUser: { ...res.data.user, role: currentRole || res.data.user.role } });
             return true;
           }
           return false;
