@@ -102,19 +102,19 @@ export default function PassagerHome() {
 
   return (
     <Layout activeTab={tab} onTabChange={setTab}>
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0 md:hidden">
         <MapView />
       </div>
       
-      <div className="absolute bottom-0 left-0 right-0 z-10 pointer-events-none">
-        <div className="pointer-events-auto max-w-md mx-auto">
+      <div className="absolute bottom-0 left-0 right-0 z-10 pointer-events-none md:relative md:z-0 md:p-6 md:h-full md:overflow-y-auto bg-gray-50/50">
+        <div className="pointer-events-auto max-w-md mx-auto md:max-w-7xl md:w-full md:h-full">
           <motion.div 
             initial={{ y: '100%' }} animate={{ y: 0 }} 
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] p-5"
+            className="bg-white rounded-t-3xl md:rounded-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] p-5 md:p-8"
           >
-            <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4" />
-            <div className="flex gap-2 mb-5 overflow-x-auto pb-1 no-scrollbar">
+            <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4 md:hidden" />
+            <div className="flex gap-2 mb-8 overflow-x-auto pb-1 no-scrollbar md:justify-center md:gap-4 border-b border-gray-100 md:pb-4">
               {[
                 { key: 'ride', label: 'Voiture' },
                 { key: 'delivery', label: 'Livraison' },
@@ -123,8 +123,8 @@ export default function PassagerHome() {
                 <button
                   key={t.key}
                   onClick={() => setTab(t.key)}
-                  className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition ${
-                    tab === t.key ? 'bg-noordrive-black text-white' : 'bg-gray-100 text-gray-600'
+                  className={`px-6 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition ${
+                    tab === t.key ? 'bg-noordrive-black text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
                   {t.label}
@@ -132,9 +132,11 @@ export default function PassagerHome() {
               ))}
             </div>
 
-            {tab === 'ride' && <RideForm onCreate={createRequest} />}
-            {tab === 'delivery' && <DeliveryForm onCreate={createRequest} />}
-            {tab === 'intercity' && <IntercityForm onCreate={createRequest} />}
+            <div className="md:mt-4">
+              {tab === 'ride' && <RideForm onCreate={createRequest} />}
+              {tab === 'delivery' && <DeliveryForm onCreate={createRequest} />}
+              {tab === 'intercity' && <IntercityForm onCreate={createRequest} />}
+            </div>
           </motion.div>
         </div>
       </div>
