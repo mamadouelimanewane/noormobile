@@ -54,7 +54,7 @@ export default function TrackingPanel({ request, viewerRole, hideMap }: { reques
             <span className="font-bold text-noordrive-green">{formatFcfa(request.proposedPrice)}</span>
           </div>
           <div className="text-sm text-gray-500">
-            {request.pickup.label} → {request.dropoff.label}
+            {request.pickup?.label || 'Départ inconnu'} → {request.dropoff?.label || 'Arrivée inconnue'}
           </div>
           
           {viewerRole === 'passager' && (request.status === 'attribue' || request.status === 'en_cours') && (

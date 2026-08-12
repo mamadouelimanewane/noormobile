@@ -317,7 +317,7 @@ function DemandesTab({ requests, driverId }: { requests: ServiceRequest[]; drive
           <div className="flex items-center justify-between">
             <div>
               <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-full mr-2">{TYPE_LABEL[r.type]}</span>
-              <span className="font-medium">{r.pickup.label} → {r.dropoff.label}</span>
+              <span className="font-medium">{r.pickup?.label || 'Départ'} → {r.dropoff?.label || 'Arrivée'}</span>
               {r.packageInfo && <div className="text-xs text-gray-500 mt-1">Colis {r.packageInfo.taille} : {r.packageInfo.description}</div>}
               {r.intercityInfo && <div className="text-xs text-gray-500 mt-1">{r.intercityInfo.dateDepart} · {r.intercityInfo.places} place(s)</div>}
             </div>
@@ -372,7 +372,7 @@ function CoursesTab({ requests }: { requests: ServiceRequest[] }) {
       {done.map((r) => (
         <div key={r.id} className="bg-white border rounded-xl p-4 flex items-center justify-between">
           <div>
-            <div className="font-medium">{r.pickup.label} → {r.dropoff.label}</div>
+            <div className="font-medium">{r.pickup?.label || 'Départ'} → {r.dropoff?.label || 'Arrivée'}</div>
             <div className="text-xs text-gray-500">{new Date(r.createdAt).toLocaleString('fr-FR')}</div>
           </div>
           <div className={`font-bold ${r.status === 'termine' ? 'text-noordrive-green' : 'text-noordrive-red'}`}>

@@ -36,7 +36,7 @@ export default function PassagerHome() {
         {activeRequest.status === 'recherche' || activeRequest.status === 'negociation' ? (
           <div className="absolute inset-0 z-0 flex flex-col justify-end">
             <div className="absolute inset-0 z-0">
-              <MapView pickup={activeRequest.pickup} dropoff={activeRequest.dropoff} driverPosition={activeRequest.driverPosition} />
+              <MapView pickup={activeRequest.pickup ?? undefined} dropoff={activeRequest.dropoff ?? undefined} driverPosition={activeRequest.driverPosition} />
             </div>
             <motion.div 
               initial={{ y: '100%' }} animate={{ y: 0 }} 
@@ -55,11 +55,11 @@ export default function PassagerHome() {
               </div>
               <div className="bg-gray-50 rounded-xl p-3 text-sm text-gray-500 mb-4 border border-gray-100">
                 <div className="flex items-center gap-2 font-medium text-black">
-                  <span className="w-2 h-2 rounded-full bg-noordrive-green" /> {activeRequest.pickup.label}
+                  <span className="w-2 h-2 rounded-full bg-noordrive-green" /> {activeRequest.pickup?.label || 'Départ'}
                 </div>
                 <div className="pl-3 border-l-2 border-dashed border-gray-300 ml-1 my-1 h-3" />
                 <div className="flex items-center gap-2 font-medium text-black">
-                  <span className="w-2 h-2 rounded-full bg-noordrive-black" /> {activeRequest.dropoff.label}
+                  <span className="w-2 h-2 rounded-full bg-noordrive-black" /> {activeRequest.dropoff?.label || 'Arrivée'}
                 </div>
                 <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between items-center">
                   <span>Votre proposition</span>
@@ -375,7 +375,7 @@ function Historique({ requests }: { requests: ServiceRequestArray }) {
       {done.map((r) => (
         <div key={r.id} className="bg-white border rounded-xl p-4 flex items-center justify-between">
           <div>
-            <div className="font-medium">{r.pickup.label} → {r.dropoff.label}</div>
+            <div className="font-medium">{r.pickup?.label || 'Départ'} → {r.dropoff?.label || 'Arrivée'}</div>
             <div className="text-xs text-gray-500">{TYPE_LABEL[r.type]} · {new Date(r.createdAt).toLocaleString('fr-FR')}</div>
           </div>
           <div className="text-right">
