@@ -71,7 +71,18 @@ export const useStore = create<StoreState>()(
     (set, get) => ({
       currentUser: null,
       setCurrentUser: (user) => {
-        set({ currentUser: user });
+        set((s) => {
+          const updates: any = { currentUser: user };
+          if (user) {
+            if (user.role === 'chauffeur' || user.role === 'both') {
+              updates.drivers = { ...s.drivers, [user.id]: { ...s.drivers[user.id], ...user } };
+            }
+            if (user.role === 'passager' || user.role === 'both') {
+              updates.passengers = { ...s.passengers, [user.id]: { ...s.passengers[user.id], ...user } };
+            }
+          }
+          return updates;
+        });
         if (user) {
           socket.auth = { userId: user.id };
           socket.connect();
