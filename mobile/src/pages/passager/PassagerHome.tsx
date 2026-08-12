@@ -153,6 +153,7 @@ function RideForm({ onCreate }: { onCreate: ReturnType<typeof useStore.getState>
   const [pickup, setPickup] = useState<GeoPoint | null>(null);
   const [dropoff, setDropoff] = useState<GeoPoint | null>(null);
   const [price, setPrice] = useState<number>(0);
+  const [isMapFullscreen, setIsMapFullscreen] = useState(false);
 
   const allDrivers = useStore((s) => s.drivers);
   const nearbyCars = useMemo(() => {
@@ -161,6 +162,14 @@ function RideForm({ onCreate }: { onCreate: ReturnType<typeof useStore.getState>
   }, [pickup, allDrivers]);
 
   const [suggestion, setSuggestion] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!pickup && 'geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition((pos) => {
+        setPickup({ lat: pos.coords.latitude, lng: pos.coords.longitude, label: 'Ma position' });
+      }, () => {}, { enableHighAccuracy: true });
+    }
+  }, []);
 
   useEffect(() => {
     if (pickup && dropoff) {
@@ -185,16 +194,32 @@ function RideForm({ onCreate }: { onCreate: ReturnType<typeof useStore.getState>
   }
 
   function handleMapClick(point: GeoPoint) {
-    if (!pickup) setPickup(point);
-    else setDropoff(point);
+    if (!pickup || (pickup && dropoff && !isMapFullscreen)) {
+      setPickup(point);
+      setDropoff(null);
+    } else {
+      setDropoff(point);
+      if (isMapFullscreen) {
+        setTimeout(() => setIsMapFullscreen(false), 500);
+      }
+    }
   }
 
   return (
     <div className="grid md:grid-cols-2 gap-6">
-      <form onSubmit={handleSubmit} className="bg-white border rounded-xl p-5 space-y-4">
+      <form onSubmit={handleSubmit} className={`bg-white border rounded-xl p-5 space-y-4 ${isMapFullscreen ? 'hidden md:block' : ''}`}>
         <h2 className="font-bold text-lg mb-1">Demander une course</h2>
         <PlaceSelect label="Départ" value={pickup?.label ?? ''} onChange={setPickup} />
         <PlaceSelect label="Arrivée" value={dropoff?.label ?? ''} onChange={setDropoff} />
+        
+        <button 
+          type="button" 
+          onClick={() => setIsMapFullscreen(true)}
+          className="w-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2"
+        >
+          📍 Choisir sur la carte plein écran
+        </button>
+
         {suggestion && (
           <p className="text-xs text-gray-500">Prix suggéré pour ce trajet : {formatFcfa(suggestion)}</p>
         )}
@@ -217,8 +242,28 @@ function RideForm({ onCreate }: { onCreate: ReturnType<typeof useStore.getState>
           Envoyer ma demande
         </button>
       </form>
-      <div className="h-72 md:h-[600px] w-full rounded-2xl overflow-hidden shadow-sm border border-gray-100">
-        <MapView pickup={pickup ?? undefined} dropoff={dropoff ?? undefined} onMapClick={handleMapClick} nearbyCars={nearbyCars} />
+      
+      <div className={`${isMapFullscreen ? 'fixed inset-0 z-50 bg-white' : 'h-72 md:h-[600px] rounded-2xl overflow-hidden shadow-sm border border-gray-100'} w-full flex flex-col`}>
+        {isMapFullscreen && (
+          <div className="absolute top-4 left-4 z-[60] flex flex-col gap-2">
+            <button onClick={() => setIsMapFullscreen(false)} className="bg-white px-4 py-2 rounded-full shadow-lg font-bold text-black border">← Retour au formulaire</button>
+          </div>
+        )}
+        
+        {isMapFullscreen && (
+          <div className="absolute top-4 right-4 left-48 z-[60] bg-white rounded-xl shadow-lg border p-3 flex flex-col gap-1 text-sm font-medium">
+            <div className={`flex items-center gap-2 ${!pickup || (pickup && dropoff) ? 'text-noordrive-green font-bold' : 'text-gray-400'}`}>
+              <div className="w-2 h-2 rounded-full bg-current" /> Départ: {pickup ? pickup.label : 'Touchez la carte'}
+            </div>
+            <div className={`flex items-center gap-2 ${pickup && !dropoff ? 'text-noordrive-black font-bold' : 'text-gray-400'}`}>
+              <div className="w-2 h-2 rounded-full bg-current" /> Arrivée: {dropoff ? dropoff.label : 'Touchez la carte'}
+            </div>
+          </div>
+        )}
+
+        <div className="flex-1 w-full relative">
+          <MapView pickup={pickup ?? undefined} dropoff={dropoff ?? undefined} onMapClick={handleMapClick} nearbyCars={nearbyCars} />
+        </div>
       </div>
     </div>
   );
