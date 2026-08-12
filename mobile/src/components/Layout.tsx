@@ -36,8 +36,8 @@ export default function Layout({ children, activeTab, onTabChange }: LayoutProps
         <Menu className="w-6 h-6 text-noordrive-black" />
       </button>
 
-      {/* Main Content (Map takes full screen) */}
-      <main className="flex-1 w-full relative z-0">{children}</main>
+      {/* Main Content */}
+      <main className="flex-1 w-full relative z-0 flex flex-col">{children}</main>
 
       {/* Sidebar Drawer overlay */}
       <AnimatePresence>
