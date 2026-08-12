@@ -77,7 +77,8 @@ export default function Auth() {
         navigate(role === 'passager' ? '/passager' : '/chauffeur');
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Erreur de connexion au serveur');
+      const msg = err.response?.data?.error || err.message || 'Erreur de connexion';
+      setError(typeof msg === 'string' ? msg : JSON.stringify(msg));
     }
   }
 
