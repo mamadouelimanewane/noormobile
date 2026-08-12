@@ -34,16 +34,18 @@ export default function PassagerHome() {
     return (
       <Layout activeTab={tab} onTabChange={setTab}>
         {activeRequest.status === 'recherche' || activeRequest.status === 'negociation' ? (
-          <div className="absolute inset-0 z-0 flex flex-col justify-end">
-            <div className="absolute inset-0 z-0">
+          <div className="absolute inset-0 z-0 flex flex-col justify-end pointer-events-none">
+            <div className="absolute inset-0 z-0 pointer-events-auto">
               <MapView pickup={activeRequest.pickup ?? undefined} dropoff={activeRequest.dropoff ?? undefined} driverPosition={activeRequest.driverPosition} />
             </div>
             <motion.div 
+              drag
+              dragMomentum={false}
               initial={{ y: '100%' }} animate={{ y: 0 }} 
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] p-5 relative z-10 w-full max-w-md mx-auto"
+              className="bg-white rounded-t-3xl md:rounded-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] p-5 relative z-10 w-full max-w-md mx-auto md:absolute md:top-24 md:left-6 md:mx-0 md:w-[400px] pointer-events-auto cursor-default"
             >
-              <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-5" />
+              <div className="w-16 h-1.5 bg-gray-200 rounded-full mx-auto mb-5 cursor-grab active:cursor-grabbing hover:bg-gray-300 transition" title="Faites glisser pour déplacer" />
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold">Recherche en cours...</h2>
                 <button
