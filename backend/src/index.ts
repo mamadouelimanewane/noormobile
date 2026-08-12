@@ -119,14 +119,14 @@ app.post('/api/auth/login', async (req, res) => {
         }
         user = (await prisma.user.update({ where: { id: user.id }, data: updateData })) as any;
       }
-      if (!user.referralCode) {
+      if (!user!.referralCode) {
         const newCode = 'NOOR-' + Math.random().toString(36).substring(2, 8).toUpperCase();
-        user = await prisma.user.update({ where: { id: user.id }, data: { referralCode: newCode } });
+        user = await prisma.user.update({ where: { id: user!.id }, data: { referralCode: newCode } });
       }
     }
     
     // Override role in response to match the requested session role
-    user.role = role;
+    user!.role = role;
     res.json({ ok: true, user });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
