@@ -39,42 +39,46 @@ export default function PassagerHome() {
               <MapView pickup={activeRequest.pickup ?? undefined} dropoff={activeRequest.dropoff ?? undefined} driverPosition={activeRequest.driverPosition} />
             </div>
             <motion.div 
-              drag
-              dragMomentum={false}
               initial={{ y: '100%' }} animate={{ y: 0 }} 
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="bg-white rounded-t-3xl md:rounded-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] p-5 relative z-10 w-full max-w-md mx-auto md:absolute md:top-24 md:left-6 md:mx-0 md:w-[400px] pointer-events-auto cursor-default"
+              className="relative z-10 w-full max-w-md mx-auto md:absolute md:top-24 md:left-6 md:mx-0 md:w-[400px] pointer-events-none"
             >
-              <div className="w-16 h-1.5 bg-gray-200 rounded-full mx-auto mb-5 cursor-grab active:cursor-grabbing hover:bg-gray-300 transition" title="Faites glisser pour déplacer" />
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold">Recherche en cours...</h2>
-                <button
-                  onClick={() => cancelRequest(activeRequest.id)}
-                  className="bg-red-50 text-noordrive-red px-3 py-1.5 rounded-full text-sm font-semibold"
-                >
-                  Annuler
-                </button>
-              </div>
-              <div className="bg-gray-50 rounded-xl p-3 text-sm text-gray-500 mb-4 border border-gray-100">
-                <div className="flex items-center gap-2 font-medium text-black">
-                  <span className="w-2 h-2 rounded-full bg-noordrive-green" /> {activeRequest.pickup?.label || 'Départ'}
+              <motion.div
+                drag
+                dragMomentum={false}
+                className="bg-white rounded-t-3xl md:rounded-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] p-5 w-full h-full pointer-events-auto cursor-default"
+              >
+                <div className="w-16 h-1.5 bg-gray-200 rounded-full mx-auto mb-5 cursor-grab active:cursor-grabbing hover:bg-gray-300 transition" title="Faites glisser pour déplacer" />
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold">Recherche en cours...</h2>
+                  <button
+                    onClick={() => cancelRequest(activeRequest.id)}
+                    className="bg-red-50 text-noordrive-red px-3 py-1.5 rounded-full text-sm font-semibold"
+                  >
+                    Annuler
+                  </button>
                 </div>
-                <div className="pl-3 border-l-2 border-dashed border-gray-300 ml-1 my-1 h-3" />
-                <div className="flex items-center gap-2 font-medium text-black">
-                  <span className="w-2 h-2 rounded-full bg-noordrive-black" /> {activeRequest.dropoff?.label || 'Arrivée'}
+                <div className="bg-gray-50 rounded-xl p-3 text-sm text-gray-500 mb-4 border border-gray-100">
+                  <div className="flex items-center gap-2 font-medium text-black">
+                    <span className="w-2 h-2 rounded-full bg-noordrive-green" /> {activeRequest.pickup?.label || 'Départ'}
+                  </div>
+                  <div className="pl-3 border-l-2 border-dashed border-gray-300 ml-1 my-1 h-3" />
+                  <div className="flex items-center gap-2 font-medium text-black">
+                    <span className="w-2 h-2 rounded-full bg-noordrive-black" /> {activeRequest.dropoff?.label || 'Arrivée'}
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between items-center">
+                    <span>Votre proposition</span>
+                    <span className="font-bold text-lg text-noordrive-black">{formatFcfa(activeRequest.proposedPrice)}</span>
+                  </div>
                 </div>
-                <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between items-center">
-                  <span>Votre proposition</span>
-                  <span className="font-bold text-lg text-noordrive-black">{formatFcfa(activeRequest.proposedPrice)}</span>
+                <div className="max-h-64 overflow-y-auto pr-1">
+                  <OffersList 
+                    offers={activeRequest.offers} 
+                    onAccept={(offerId) => acceptOffer(activeRequest.id, offerId)} 
+                    onDecline={(offerId) => declineOffer(activeRequest.id, offerId)}
+                  />
                 </div>
-              </div>
-              <div className="max-h-64 overflow-y-auto pr-1">
-                <OffersList 
-                  offers={activeRequest.offers} 
-                  onAccept={(offerId) => acceptOffer(activeRequest.id, offerId)} 
-                  onDecline={(offerId) => declineOffer(activeRequest.id, offerId)}
-                />
-              </div>
+              </motion.div>
             </motion.div>
           </div>
         ) : (
