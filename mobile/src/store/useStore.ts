@@ -100,6 +100,17 @@ export const useStore = create<StoreState>()(
       settings: { commissionRate: 0.12, taxRate: 0.18 },
       
       setupSocket: () => {
+        socket.off('connect').on('connect', () => {
+          const state = get();
+          const user = state.currentUser;
+          if (user?.role === 'chauffeur') {
+            const driver = state.drivers[user.id];
+            if (driver?.isOnline) {
+              socket.emit('driver:online', { driverId: user.id });
+            }
+          }
+        });
+        
         socket.off('ride:created').on('ride:created', (req) => {
           set((s) => ({ requests: [req, ...s.requests] }));
         });
@@ -344,6 +355,11 @@ export const useStore = create<StoreState>()(
       },
 
       driverSetOnline: (driverId, isOnline) => {
+        if (isOnline) {
+          socket.emit('driver:online', { driverId });
+        } else {
+          socket.emit('driver:offline', { driverId });
+        }
         set((s) => ({ drivers: { ...s.drivers, [driverId]: { ...s.drivers[driverId], isOnline } } }));
       },
 
