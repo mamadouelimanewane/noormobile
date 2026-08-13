@@ -523,7 +523,82 @@ app.post('/api/admin/loans/reject', async (req, res) => {
   }
 });
 // --------------------
+// PAYMENT WEBHOOKS
+// --------------------
 
+// Stripe Webhook (Credit Cards)
+app.post('/api/webhooks/stripe', async (req, res) => {
+  try {
+    // In production, you would verify the Stripe signature here using stripe.webhooks.constructEvent()
+    const { userId, amount, transactionId, status } = req.body;
+    
+    if (status === 'succeeded') {
+      // 1. Log Transaction
+      const transaction = await prisma.transaction.create({
+        data: {
+          userId,
+          type: 'deposit',
+          amount,
+          method: 'stripe',
+          status: 'completed',
+          reference: transactionId,
+          description: 'Rechargement par Carte Bancaire'
+        }
+      });
+      
+      // 2. Update Wallet Balance
+      await prisma.wallet.update({
+        where: { userId },
+        data: { balance: { increment: amount } }
+      });
+      
+      console.log(`[Stripe Webhook] Successfully processed +${amount} FCFA for user ${userId}`);
+    }
+    
+    res.status(200).json({ received: true });
+  } catch (err: any) {
+    console.error(`[Stripe Webhook Error]`, err);
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Wave Webhook (Mobile Money)
+app.post('/api/webhooks/wave', async (req, res) => {
+  try {
+    // In production, verify the Wave-Signature header
+    const { userId, amount, transactionId, status } = req.body;
+    
+    if (status === 'succeeded') {
+      // 1. Log Transaction
+      const transaction = await prisma.transaction.create({
+        data: {
+          userId,
+          type: 'deposit',
+          amount,
+          method: 'wave',
+          status: 'completed',
+          reference: transactionId,
+          description: 'Rechargement via Wave'
+        }
+      });
+      
+      // 2. Update Wallet Balance
+      await prisma.wallet.update({
+        where: { userId },
+        data: { balance: { increment: amount } }
+      });
+      
+      console.log(`[Wave Webhook] Successfully processed +${amount} FCFA for user ${userId}`);
+    }
+    
+    res.status(200).json({ received: true });
+  } catch (err: any) {
+    console.error(`[Wave Webhook Error]`, err);
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// --------------------
 // Admin routes
 app.get('/api/admin/settings', async (req, res) => {
   try {
