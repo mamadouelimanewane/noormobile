@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Layout from '../../components/Layout';
 import { useStore } from '../../store/useStore';
 import TrackingPanel from '../../components/TrackingPanel';
 import MapView from '../../components/MapView';
 import { formatFcfa } from '../../lib/geo';
-import { Mic } from 'lucide-react';
+import { Mic, Power, Navigation2, CheckCircle2 } from 'lucide-react';
 import { useSpeechToText } from '../../hooks/useSpeechToText';
 import type { Driver, ServiceRequest } from '../../types';
 import ParrainageTab from '../../components/ParrainageTab';
@@ -73,26 +73,42 @@ export default function ChauffeurHome() {
   if (!driver || !driver.isOnline || tab !== 'demandes') {
     return (
       <Layout activeTab={tab} onTabChange={setTab}>
-        <div className="pt-16 max-w-xl mx-auto w-full">
-          <div className="flex items-center justify-between mb-5 bg-white border rounded-xl p-4 shadow-sm">
-            <div>
-              <div className="font-semibold">{driver?.vehicle?.marque || 'Véhicule'} {driver?.vehicle?.modele || 'Standard'}</div>
-              <div className="text-xs text-gray-500 mb-2">★ {driver?.rating?.toFixed(1) || '5.0'} · {driver?.vehicle?.plaque || 'Non défini'}</div>
-              {/* Gamification Badge Removed for types */}
+        <div className="pt-16 pb-20 max-w-xl mx-auto w-full px-4">
+          <div className="flex items-center justify-between mb-6 bg-white border border-gray-100 rounded-3xl p-5 shadow-sm">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center border-2 border-white shadow-sm overflow-hidden">
+                 <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${currentUser.name}&backgroundColor=0a8f4c`} alt="Avatar" />
+              </div>
+              <div>
+                <div className="font-black text-lg text-gray-800 leading-tight">{driver?.vehicle?.marque || 'Véhicule'} {driver?.vehicle?.modele || ''}</div>
+                <div className="text-xs font-bold text-gray-500 mt-1 flex items-center gap-1">
+                  <span className="text-yellow-500">★</span> {driver?.rating?.toFixed(1) || '5.0'} <span className="text-gray-300">|</span> {driver?.vehicle?.plaque || 'Non défini'}
+                </div>
+              </div>
             </div>
-            <button 
-              onClick={() => driver && driverSetOnline(driver.id, !driver.isOnline)} 
-              className={`px-5 py-2 rounded-full font-bold text-white transition ${driver?.isOnline ? 'bg-noordrive-red' : 'bg-noordrive-green'}`}
-            >
-              {driver?.isOnline ? 'Passer Hors ligne' : 'Passer En ligne'}
-            </button>
           </div>
 
           {tab === 'demandes' && (!driver || !driver.isOnline) && (
-            <div className="bg-gray-100 p-8 rounded-2xl text-center">
-              <h2 className="text-xl font-bold mb-2">Vous êtes hors ligne</h2>
-              <p className="text-sm text-gray-500">Passez en ligne pour recevoir des courses et augmenter vos revenus aujourd'hui.</p>
-            </div>
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }} 
+              animate={{ scale: 1, opacity: 1 }} 
+              className="bg-white border-2 border-gray-100 p-8 rounded-[2rem] text-center shadow-lg shadow-black/5 mt-10 relative overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-gray-50 to-transparent z-0"></div>
+              <div className="relative z-10 flex flex-col items-center">
+                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                  <Power className="w-10 h-10 text-gray-400" />
+                </div>
+                <h2 className="text-2xl font-black mb-2 text-gray-800">Vous êtes hors ligne</h2>
+                <p className="text-sm font-medium text-gray-500 mb-8 max-w-[250px] mx-auto">Passez en ligne pour recevoir des courses et augmenter vos revenus dès aujourd'hui.</p>
+                <button 
+                  onClick={() => driver && driverSetOnline(driver.id, true)} 
+                  className="w-full bg-noordrive-green hover:bg-green-700 text-white font-black text-lg py-4 rounded-2xl shadow-xl shadow-green-500/30 transition-all active:scale-95 flex items-center justify-center gap-2"
+                >
+                  <Power className="w-5 h-5" /> GO (En ligne)
+                </button>
+              </div>
+            </motion.div>
           )}
           {tab === 'courses' && <CoursesTab requests={requests.filter((r) => r.driverId === currentUser.id)} />}
           {tab === 'revenus' && <RevenusTab />}
@@ -127,19 +143,19 @@ export default function ChauffeurHome() {
       )}
 
       {showIntercityModal && (
-        <div className="absolute inset-0 z-50 bg-black/60 flex flex-col justify-end">
+        <div className="absolute inset-0 z-50 bg-black/60 flex flex-col justify-end backdrop-blur-sm">
           <motion.div 
             initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-            className="bg-gray-100 rounded-t-3xl p-4 h-[85vh] overflow-y-auto w-full max-w-xl mx-auto shadow-2xl"
+            className="bg-gray-50 rounded-t-[2rem] p-5 h-[85vh] overflow-y-auto w-full max-w-xl mx-auto shadow-2xl"
           >
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Mes Passagers ({myActives.length})</h2>
-              <button onClick={() => setShowIntercityModal(false)} className="bg-white rounded-full py-1.5 text-sm font-bold shadow-sm px-4">Fermer</button>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-black text-gray-800">Passagers ({myActives.length})</h2>
+              <button onClick={() => setShowIntercityModal(false)} className="bg-white rounded-full py-2 px-5 text-sm font-bold shadow-sm border border-gray-100">Fermer</button>
             </div>
             <div className="space-y-4 pb-10">
               {myActives.map(req => (
-                <div key={req.id} className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200">
-                  <div className="p-3 border-b bg-gray-50 font-medium text-sm flex justify-between items-center">
+                <div key={req.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+                  <div className="p-4 border-b border-gray-100 bg-gray-50/50 font-bold text-gray-700 flex justify-between items-center">
                     <span>{req.passengerName || "Passager"}</span>
                   </div>
                   <div className="p-2">
@@ -152,19 +168,28 @@ export default function ChauffeurHome() {
         </div>
       )}
 
-      <div className={`absolute ${isIntercityRide ? 'top-36' : 'top-20'} left-1/2 -translate-x-1/2 z-10 bg-noordrive-black text-white px-6 py-2 rounded-full shadow-lg font-bold flex items-center gap-2 transition-all`}>
-        <span className="w-2 h-2 bg-noordrive-green rounded-full animate-pulse" /> En ligne
+      <div className={`absolute ${isIntercityRide ? 'top-36' : 'top-20'} left-1/2 -translate-x-1/2 z-10`}>
+        <motion.div 
+          animate={{ scale: [1, 1.05, 1], boxShadow: ["0px 0px 0px 0px rgba(10,143,76,0)", "0px 0px 20px 5px rgba(10,143,76,0.3)", "0px 0px 0px 0px rgba(10,143,76,0)"] }}
+          transition={{ repeat: Infinity, duration: 2 }}
+          className="bg-white/90 backdrop-blur-md border-2 border-noordrive-green text-noordrive-green px-6 py-2.5 rounded-full shadow-lg font-black text-sm flex items-center gap-3"
+        >
+          <span className="w-2.5 h-2.5 bg-noordrive-green rounded-full animate-pulse shadow-[0_0_8px_#0a8f4c]" /> En recherche de course
+        </motion.div>
       </div>
-      <div className="absolute bottom-6 left-0 right-0 z-10 pointer-events-none px-4">
-        <div className="pointer-events-auto max-w-md mx-auto space-y-4">
+
+      <div className="absolute bottom-6 left-0 right-0 z-10 pointer-events-none px-4 flex flex-col justify-end">
+        <div className="pointer-events-auto max-w-md mx-auto w-full space-y-4">
           <DemandesTab requests={available} driverId={driver.id} />
           
-          <button 
-            onClick={() => driverSetOnline(driver.id, false)} 
-            className="w-full bg-white text-red-600 font-bold py-3 rounded-xl shadow-lg border border-red-100"
-          >
-            Se déconnecter (Hors ligne)
-          </button>
+          {available.length === 0 && (
+            <button 
+              onClick={() => driverSetOnline(driver.id, false)} 
+              className="w-16 h-16 bg-white hover:bg-gray-50 text-noordrive-red rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.15)] flex items-center justify-center mx-auto transition-transform active:scale-90 border border-gray-100"
+            >
+              <Power className="w-6 h-6" />
+            </button>
+          )}
         </div>
       </div>
     </Layout>
@@ -295,63 +320,89 @@ function DemandesTab({ requests, driverId }: { requests: ServiceRequest[]; drive
   const driverMakeOffer = useStore((s) => s.driverMakeOffer);
   const { isListening, isSupported, startListening, stopListening } = useSpeechToText();
 
-  if (requests.length === 0) return <p className="text-center text-gray-400 py-10 text-sm">Aucune demande disponible pour le moment.</p>;
+  if (requests.length === 0) return null;
 
   return (
-    <div className="space-y-3">
-      {requests.map((r) => (
-        <motion.div 
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          key={r.id} 
-          className="bg-white border rounded-xl p-4 shadow-xl"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-full mr-2">{TYPE_LABEL[r.type]}</span>
-              <span className="font-medium">{r.pickup?.label || 'Départ'} → {r.dropoff?.label || 'Arrivée'}</span>
-              {r.packageInfo && <div className="text-xs text-gray-500 mt-1">Colis {r.packageInfo.taille} : {r.packageInfo.description}</div>}
-              {r.intercityInfo && <div className="text-xs text-gray-500 mt-1">{r.intercityInfo.dateDepart} · {r.intercityInfo.places} place(s)</div>}
+    <div className="space-y-4">
+      <AnimatePresence>
+        {requests.map((r) => (
+          <motion.div 
+            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+            key={r.id} 
+            className="bg-white rounded-[1.5rem] shadow-[0_15px_40px_rgba(0,0,0,0.15)] overflow-hidden relative"
+          >
+            {/* Top Indicator bar */}
+            <div className="h-1.5 w-full bg-gradient-to-r from-noordrive-green to-teal-400" />
+            
+            <div className="p-5">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1 pr-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs font-black uppercase tracking-wider bg-black text-white px-2 py-1 rounded-md">{TYPE_LABEL[r.type]}</span>
+                    <span className="text-xs font-bold text-gray-400 bg-gray-100 px-2 py-1 rounded-md flex items-center gap-1"><Navigation2 className="w-3 h-3"/> 2 min</span>
+                  </div>
+                  <div className="space-y-2 relative">
+                    <div className="absolute left-2.5 top-2.5 bottom-2.5 w-px bg-gray-200 z-0"></div>
+                    <div className="flex items-start gap-3 relative z-10">
+                      <div className="w-5 h-5 rounded-full bg-white border-4 border-black shrink-0 mt-0.5 shadow-sm"></div>
+                      <span className="font-bold text-sm text-gray-800 leading-snug">{r.pickup?.label || 'Départ'}</span>
+                    </div>
+                    <div className="flex items-start gap-3 relative z-10">
+                      <div className="w-5 h-5 rounded-full bg-white border-4 border-noordrive-green shrink-0 mt-0.5 shadow-sm"></div>
+                      <span className="font-bold text-sm text-gray-800 leading-snug">{r.dropoff?.label || 'Arrivée'}</span>
+                    </div>
+                  </div>
+                  {r.packageInfo && <div className="text-xs font-medium bg-orange-50 text-orange-700 px-3 py-2 rounded-lg mt-3 border border-orange-100">📦 Colis {r.packageInfo.taille} : {r.packageInfo.description}</div>}
+                  {r.intercityInfo && <div className="text-xs font-medium bg-blue-50 text-blue-700 px-3 py-2 rounded-lg mt-3 border border-blue-100">🗓️ {r.intercityInfo.dateDepart} · {r.intercityInfo.places} place(s)</div>}
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="text-2xl font-black text-black leading-none">{formatFcfa(r.proposedPrice)}</div>
+                  <div className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-wider">
+                    Gains nets : <span className="text-noordrive-green">{formatFcfa(r.proposedPrice * 0.88)}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
+                <button
+                  onClick={() => driverMakeOffer(r.id, driverId, r.proposedPrice, 5)}
+                  className="flex-[2] bg-noordrive-green hover:bg-green-700 text-white text-sm font-black py-4 rounded-xl shadow-lg shadow-green-500/30 transition-transform active:scale-95 flex items-center justify-center gap-2"
+                >
+                  <CheckCircle2 className="w-5 h-5" /> Accepter
+                </button>
+                <div className="flex-1 grid grid-rows-2 gap-2">
+                  <button
+                    onClick={() => driverMakeOffer(r.id, driverId, r.proposedPrice + 500, 5)}
+                    className="bg-gray-100 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-200 transition-colors"
+                  >
+                    +500F
+                  </button>
+                  {isSupported ? (
+                    <button
+                      onClick={() => {
+                        if (isListening) stopListening();
+                        else startListening((amount) => driverMakeOffer(r.id, driverId, amount, 5));
+                      }}
+                      className={`flex justify-center items-center rounded-lg transition-colors ${isListening ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                    >
+                      <Mic className={`w-4 h-4 ${isListening ? 'animate-pulse' : ''}`} />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => driverMakeOffer(r.id, driverId, r.proposedPrice + 1000, 5)}
+                      className="bg-gray-100 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                      +1000F
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="text-noordrive-green font-bold text-xl">{formatFcfa(r.proposedPrice)}</div>
-          </div>
-          <div className="text-xs text-gray-500 mb-3 text-right">
-            Gain estimé : <span className="font-bold text-gray-700">{formatFcfa(r.proposedPrice * 0.88)}</span> (Com. 12%)
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => driverMakeOffer(r.id, driverId, r.proposedPrice, 5)}
-              className="flex-[2] bg-noordrive-black text-white text-sm font-semibold py-2.5 rounded-xl shadow-md hover:bg-black transition"
-            >
-              Accepter
-            </button>
-            <button
-              onClick={() => driverMakeOffer(r.id, driverId, r.proposedPrice + 500, 5)}
-              className="flex-1 bg-gray-100 text-gray-700 text-sm font-bold py-2.5 rounded-xl border hover:bg-gray-200 transition"
-            >
-              +500
-            </button>
-            {isSupported ? (
-              <button
-                onClick={() => {
-                  if (isListening) stopListening();
-                  else startListening((amount) => driverMakeOffer(r.id, driverId, amount, 5));
-                }}
-                className={`flex-1 flex justify-center items-center py-2.5 rounded-xl border transition ${isListening ? 'bg-red-500 text-white animate-pulse border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-              >
-                <Mic className={`w-5 h-5 ${isListening ? 'animate-bounce' : ''}`} />
-              </button>
-            ) : (
-              <button
-                onClick={() => driverMakeOffer(r.id, driverId, r.proposedPrice + 1000, 5)}
-                className="flex-1 bg-gray-100 text-gray-700 text-sm font-bold py-2.5 rounded-xl border hover:bg-gray-200 transition"
-              >
-                +1000
-              </button>
-            )}
-          </div>
-        </motion.div>
-      ))}
+          </motion.div>
+        ))}
+      </AnimatePresence>
     </div>
   );
 }
