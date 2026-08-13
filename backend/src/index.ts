@@ -113,6 +113,26 @@ app.post('/api/ai/parse-intent', async (req, res) => {
   }
 });
 
+// Get Active Drivers for Map
+app.get('/api/drivers/active', async (req, res) => {
+  try {
+    const drivers = await prisma.user.findMany({
+      where: {
+        OR: [{ role: 'chauffeur' }, { role: 'both' }],
+        isOnline: true
+      },
+      include: { vehicle: true }
+    });
+    // Transform to match Driver type on frontend
+    const formatted = drivers.map(d => ({
+      ...d,
+      position: d.position ? (d.position as any) : { lat: 14.6928, lng: -17.4467, heading: 0 } // Default to Dakar if null
+    }));
+    res.json(formatted);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
 // Register or Login Endpoint
 app.post('/api/auth/login', async (req, res) => {
   const { phone, role, name, vehicle, referralCode } = req.body;

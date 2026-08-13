@@ -64,6 +64,7 @@ interface StoreState {
   cashoutWallet: (driverId: string, amount: number, method: PaymentMethod) => Promise<boolean>;
   updateSettings: (settings: Partial<PlatformSettings>) => void;
   setupSocket: () => void;
+  fetchActiveDrivers: () => Promise<void>;
 }
 
 export const useStore = create<StoreState>()(
@@ -108,6 +109,8 @@ export const useStore = create<StoreState>()(
             if (driver?.isOnline) {
               socket.emit('driver:online', { driverId: user.id });
             }
+          } else {
+            get().fetchActiveDrivers();
           }
         });
         
@@ -178,8 +181,15 @@ export const useStore = create<StoreState>()(
         });
         socket.off('driver:moved').on('driver:moved', (data: any) => {
           set((s) => {
-             const driver = s.drivers[data.driverId];
-             if (!driver || !data.position) return s;
+             if (!data.position) return s;
+             const driver = s.drivers[data.driverId] || { 
+               id: data.driverId, 
+               isOnline: true, 
+               role: 'chauffeur', 
+               name: 'Chauffeur', 
+               rating: 5, 
+               ratingCount: 0 
+             };
              return { drivers: { ...s.drivers, [data.driverId]: { ...driver, position: { lat: data.position.lat, lng: data.position.lng, heading: data.position.heading, label: 'En mouvement' } } } };
           });
         });
@@ -436,6 +446,22 @@ export const useStore = create<StoreState>()(
         } catch (err) {
           console.error(err);
           return false;
+        }
+      },
+
+      fetchActiveDrivers: async () => {
+        try {
+          const res = await api.get('/drivers/active');
+          const activeDrivers = res.data;
+          set((s) => {
+            const newDrivers = { ...s.drivers };
+            activeDrivers.forEach((d: any) => {
+              newDrivers[d.id] = { ...newDrivers[d.id], ...d };
+            });
+            return { drivers: newDrivers };
+          });
+        } catch (err) {
+          console.error('Failed to fetch active drivers:', err);
         }
       },
     }),
