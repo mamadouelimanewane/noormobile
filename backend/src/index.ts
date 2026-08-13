@@ -621,9 +621,9 @@ app.post('/api/webhooks/stripe', async (req, res) => {
       });
       
       // 2. Update Wallet Balance
-      await prisma.wallet.update({
-        where: { userId },
-        data: { balance: { increment: amount } }
+      await prisma.user.update({
+        where: { id: userId },
+        data: { walletBalance: { increment: amount } }
       });
       
       console.log(`[Stripe Webhook] Successfully processed +${amount} FCFA for user ${userId}`);
@@ -657,9 +657,9 @@ app.post('/api/webhooks/wave', async (req, res) => {
       });
       
       // 2. Update Wallet Balance
-      await prisma.wallet.update({
-        where: { userId },
-        data: { balance: { increment: amount } }
+      await prisma.user.update({
+        where: { id: userId },
+        data: { walletBalance: { increment: amount } }
       });
       
       console.log(`[Wave Webhook] Successfully processed +${amount} FCFA for user ${userId}`);

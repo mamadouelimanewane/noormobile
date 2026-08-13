@@ -40,11 +40,80 @@ app.use(express_1.default.json());
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', time: new Date() });
 });
+// --- SOCKET.IO REALTIME LOGIC ---
+io.on('connection', (socket) => {
+    console.log('⚡ Client connected to Socket.io:', socket.id);
+    socket.on('join', (data) => {
+        // data can be { userId, role: 'driver' | 'passenger' }
+        if (data && data.userId) {
+            socket.join(data.userId);
+            console.log(`User ${data.userId} joined room`);
+        }
+    });
+    socket.on('driver_location_update', (data) => {
+        // Broadcast driver location to anyone listening (passengers tracking this driver)
+        // data = { driverId, lat, lng }
+        socket.broadcast.emit('driver_moved', data);
+    });
+    socket.on('disconnect', () => {
+        console.log('Client disconnected:', socket.id);
+    });
+});
+// --- SURGE PRICING API ---
+app.get('/api/surge-pricing', async (req, res) => {
+    try {
+        // Simulate real algorithm: If few drivers and many requests in last 10 mins = SURGE
+        const activeRequests = await prisma.serviceRequest.count({
+            where: { status: 'recherche' }
+        });
+        // For demo purposes, we randomly activate surge or use a simple logic
+        // Let's force it to 1.4 if we have ANY active requests searching, otherwise 1.0
+        const surgeMultiplier = activeRequests > 0 ? 1.4 : 1.0;
+        res.json({ multiplier: surgeMultiplier, activeRequests });
+    }
+    catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+// --- NOOR AI ASSISTANT API ---
+app.post('/api/ai/parse-intent', async (req, res) => {
+    try {
+        const { text } = req.body;
+        // Simulate NLP / LLM extraction
+        // Example: "Trouve moi une voiture confort pour aller à l'Aéroport AIBD"
+        let type = 'ride';
+        let category = 'Standard';
+        let dropoff = null;
+        const lowerText = text.toLowerCase();
+        if (lowerText.includes('confort'))
+            category = 'Confort';
+        if (lowerText.includes('moto'))
+            category = 'Moto';
+        if (lowerText.includes('colis') || lowerText.includes('livrer'))
+            type = 'delivery';
+        if (lowerText.includes('aéroport') || lowerText.includes('aibd')) {
+            dropoff = { lat: 14.67, lng: -17.07, label: 'Aéroport AIBD' };
+        }
+        else if (lowerText.includes('almadies')) {
+            dropoff = { lat: 14.74, lng: -17.51, label: 'Les Almadies' };
+        }
+        else if (lowerText.includes('plateau')) {
+            dropoff = { lat: 14.66, lng: -17.43, label: 'Dakar Plateau' };
+        }
+        res.json({
+            intentParsed: true,
+            data: { type, category, dropoff }
+        });
+    }
+    catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 // Register or Login Endpoint
 app.post('/api/auth/login', async (req, res) => {
     const { phone, role, name, vehicle, referralCode } = req.body;
     try {
-        let user = await prisma.user.findUnique({ where: { phone } });
+        let user = await prisma.user.findUnique({ where: { phone }, include: { vehicle: true } });
         if (!user) {
             if (!name)
                 return res.status(400).json({ error: 'Name required for registration' });
@@ -58,14 +127,15 @@ app.post('/api/auth/login', async (req, res) => {
                     phone,
                     name,
                     role,
-                    accountStatus: role === 'chauffeur' ? 'PENDING' : 'APPROVED',
+                    accountStatus: 'APPROVED', // Auto-validation for demonstration mode
                     avatarColor: '#0a8f4c',
                     referralCode: newCode,
                     referredById: sponsor?.id || null,
                     vehicle: role === 'chauffeur' && vehicle ? {
                         create: vehicle
                     } : undefined
-                }
+                },
+                include: { vehicle: true }
             });
             if (sponsor) {
                 const settings = await prisma.platformSettings.findUnique({ where: { id: 'default' } });
@@ -103,25 +173,28 @@ app.post('/api/auth/login', async (req, res) => {
                         }
                     })
                 ]);
-                user = await prisma.user.findUnique({ where: { id: user.id } });
+                user = await prisma.user.findUnique({ where: { id: user.id }, include: { vehicle: true } });
             }
         }
         else {
             if (user.role !== role && user.role !== 'both') {
                 const updateData = { role: 'both' };
                 if (role === 'chauffeur') {
-                    updateData.accountStatus = 'PENDING';
+                    updateData.accountStatus = 'APPROVED'; // Auto-validation for demonstration mode
                     if (vehicle) {
                         const existingVehicle = await prisma.vehicle.findUnique({ where: { driverId: user.id } });
                         if (!existingVehicle)
                             updateData.vehicle = { create: vehicle };
                     }
                 }
-                user = (await prisma.user.update({ where: { id: user.id }, data: updateData }));
+                user = (await prisma.user.update({ where: { id: user.id }, data: updateData, include: { vehicle: true } }));
             }
             if (!user.referralCode) {
                 const newCode = 'NOOR-' + Math.random().toString(36).substring(2, 8).toUpperCase();
-                user = await prisma.user.update({ where: { id: user.id }, data: { referralCode: newCode } });
+                user = await prisma.user.update({ where: { id: user.id }, data: { referralCode: newCode }, include: { vehicle: true } });
+            }
+            if (user.accountStatus === 'PENDING') {
+                user = await prisma.user.update({ where: { id: user.id }, data: { accountStatus: 'APPROVED' }, include: { vehicle: true } });
             }
         }
         // Override role in response to match the requested session role
@@ -505,6 +578,73 @@ app.post('/api/admin/loans/reject', async (req, res) => {
     }
 });
 // --------------------
+// PAYMENT WEBHOOKS
+// --------------------
+// Stripe Webhook (Credit Cards)
+app.post('/api/webhooks/stripe', async (req, res) => {
+    try {
+        // In production, you would verify the Stripe signature here using stripe.webhooks.constructEvent()
+        const { userId, amount, transactionId, status } = req.body;
+        if (status === 'succeeded') {
+            // 1. Log Transaction
+            const transaction = await prisma.transaction.create({
+                data: {
+                    userId,
+                    type: 'deposit',
+                    amount,
+                    method: 'stripe',
+                    status: 'completed',
+                    reference: transactionId,
+                    description: 'Rechargement par Carte Bancaire'
+                }
+            });
+            // 2. Update Wallet Balance
+            await prisma.user.update({
+                where: { id: userId },
+                data: { walletBalance: { increment: amount } }
+            });
+            console.log(`[Stripe Webhook] Successfully processed +${amount} FCFA for user ${userId}`);
+        }
+        res.status(200).json({ received: true });
+    }
+    catch (err) {
+        console.error(`[Stripe Webhook Error]`, err);
+        res.status(400).json({ error: err.message });
+    }
+});
+// Wave Webhook (Mobile Money)
+app.post('/api/webhooks/wave', async (req, res) => {
+    try {
+        // In production, verify the Wave-Signature header
+        const { userId, amount, transactionId, status } = req.body;
+        if (status === 'succeeded') {
+            // 1. Log Transaction
+            const transaction = await prisma.transaction.create({
+                data: {
+                    userId,
+                    type: 'deposit',
+                    amount,
+                    method: 'wave',
+                    status: 'completed',
+                    reference: transactionId,
+                    description: 'Rechargement via Wave'
+                }
+            });
+            // 2. Update Wallet Balance
+            await prisma.user.update({
+                where: { id: userId },
+                data: { walletBalance: { increment: amount } }
+            });
+            console.log(`[Wave Webhook] Successfully processed +${amount} FCFA for user ${userId}`);
+        }
+        res.status(200).json({ received: true });
+    }
+    catch (err) {
+        console.error(`[Wave Webhook Error]`, err);
+        res.status(400).json({ error: err.message });
+    }
+});
+// --------------------
 // Admin routes
 app.get('/api/admin/settings', async (req, res) => {
     try {
@@ -520,11 +660,12 @@ app.get('/api/admin/settings', async (req, res) => {
 });
 app.post('/api/admin/settings', async (req, res) => {
     try {
-        const { commissionRate, referralBonusSponsor, referralBonusReferee, baseFare, perKmRate, withdrawalFee, maxLoanAmount } = req.body;
+        const { commissionRate, referralBonusSponsor, referralBonusReferee, baseFare, perKmRate, withdrawalFee, maxLoanAmount, waveApiKey, orangeMoneyApiKey, stripeSecretKey, googleMapsApiKey, searchRadiusKm, forceAppUpdate } = req.body;
+        const updateData = { commissionRate, referralBonusSponsor, referralBonusReferee, baseFare, perKmRate, withdrawalFee, maxLoanAmount, waveApiKey, orangeMoneyApiKey, stripeSecretKey, googleMapsApiKey, searchRadiusKm, forceAppUpdate };
         const settings = await prisma.platformSettings.upsert({
             where: { id: 'default' },
-            update: { commissionRate, referralBonusSponsor, referralBonusReferee, baseFare, perKmRate, withdrawalFee, maxLoanAmount },
-            create: { id: 'default', commissionRate, referralBonusSponsor, referralBonusReferee, baseFare, perKmRate, withdrawalFee, maxLoanAmount }
+            update: updateData,
+            create: { id: 'default', ...updateData }
         });
         res.json(settings);
     }
@@ -1220,6 +1361,76 @@ app.put('/api/support/tickets/:id/status', async (req, res) => {
     }
 });
 // --------------------
+// Phase 4 - New Endpoints (Marketing, Risk, Fleet)
+app.get('/api/admin/promocodes', async (req, res) => {
+    try {
+        const codes = await prisma.promoCode.findMany({ orderBy: { createdAt: 'desc' } });
+        res.json(codes);
+    }
+    catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+app.post('/api/admin/promocodes', async (req, res) => {
+    try {
+        const { code, discountPct, maxUsage, expiresAt } = req.body;
+        const newCode = await prisma.promoCode.create({
+            data: { code, discountPct, maxUsage, expiresAt: new Date(expiresAt) }
+        });
+        res.json(newCode);
+    }
+    catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+app.get('/api/admin/quests', async (req, res) => {
+    try {
+        const quests = await prisma.driverQuest.findMany({ orderBy: { createdAt: 'desc' } });
+        res.json(quests);
+    }
+    catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+app.get('/api/admin/fraud', async (req, res) => {
+    try {
+        const alerts = await prisma.fraudAlert.findMany({ orderBy: { createdAt: 'desc' } });
+        res.json(alerts);
+    }
+    catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+app.get('/api/admin/audit', async (req, res) => {
+    try {
+        const logs = await prisma.auditLog.findMany({ orderBy: { createdAt: 'desc' }, take: 100 });
+        res.json(logs);
+    }
+    catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+app.get('/api/admin/emergency', async (req, res) => {
+    try {
+        const alerts = await prisma.emergencyAlert.findMany({ orderBy: { createdAt: 'desc' } });
+        res.json(alerts);
+    }
+    catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+app.get('/api/admin/fleets', async (req, res) => {
+    try {
+        const fleets = await prisma.fleetCompany.findMany({
+            include: { _count: { select: { drivers: true } } },
+            orderBy: { createdAt: 'desc' }
+        });
+        res.json(fleets);
+    }
+    catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
