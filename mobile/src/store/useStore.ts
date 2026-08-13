@@ -140,6 +140,26 @@ export const useStore = create<StoreState>()(
             requests: s.requests.map((r) => (r.id === req.id ? { ...r, status: 'annule', updatedAt: Date.now() } : r)),
           }));
         });
+        socket.off('driver_moved').on('driver_moved', (data: { driverId: string; lat: number; lng: number }) => {
+          set((s) => {
+            const driver = s.drivers[data.driverId];
+            if (!driver) return s;
+            return {
+              drivers: {
+                ...s.drivers,
+                [data.driverId]: {
+                  ...driver,
+                  position: { lat: data.lat, lng: data.lng }
+                }
+              },
+              requests: s.requests.map((r) =>
+                r.driverId === data.driverId
+                  ? { ...r, driverPosition: { lat: data.lat, lng: data.lng } }
+                  : r
+              )
+            };
+          });
+        });
         socket.off('ride:updated').on('ride:updated', (req) => {
           set((s) => ({
             requests: s.requests.map((r) => (r.id === req.id ? { ...r, status: req.status, updatedAt: req.updatedAt } : r)),

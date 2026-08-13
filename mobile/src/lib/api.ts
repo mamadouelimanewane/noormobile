@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { io } from 'socket.io-client';
 
-export const API_URL = 'https://noordrive-api.onrender.com/api';
-export const SOCKET_URL = 'https://noordrive-api.onrender.com';
+export const API_URL = 'http://localhost:3000/api';
+export const SOCKET_URL = 'http://localhost:3000';
 
 export const api = axios.create({
   baseURL: API_URL,

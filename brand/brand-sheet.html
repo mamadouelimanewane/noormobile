@@ -1,0 +1,238 @@
+<title>NOORDRIVER — Identité visuelle</title>
+<style>
+  :root {
+    --green: #0a8f4c;
+    --green-deep: #066b39;
+    --green-bright: #0fae5d;
+    --green-soft: #3fd68a;
+    --ink: #0e0e10;
+
+    --bg: #f2f5f3;
+    --surface: #ffffff;
+    --line: #dbe3de;
+    --text: #14201a;
+    --muted: #5f6f67;
+    --code-bg: #eef2ef;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0d1310;
+      --surface: #141c18;
+      --line: #26332c;
+      --text: #e8efea;
+      --muted: #93a49b;
+      --code-bg: #101815;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d1310;
+    --surface: #141c18;
+    --line: #26332c;
+    --text: #e8efea;
+    --muted: #93a49b;
+    --code-bg: #101815;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: clamp(24px, 5vw, 64px) clamp(16px, 5vw, 40px) 96px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: 56px; }
+
+  header { display: flex; flex-direction: column; gap: 14px; }
+  .eyebrow {
+    font-size: 12px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase;
+    color: var(--green); margin: 0;
+  }
+  h1 {
+    font-size: clamp(30px, 5vw, 46px); font-weight: 800; letter-spacing: -.02em;
+    margin: 0; text-wrap: balance; line-height: 1.12;
+  }
+  .lede { margin: 0; max-width: 62ch; color: var(--muted); font-size: 17px; }
+
+  section { display: flex; flex-direction: column; gap: 20px; }
+  h2 {
+    font-size: 13px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
+    margin: 0; color: var(--muted);
+    padding-bottom: 12px; border-bottom: 1px solid var(--line);
+  }
+  h3 { font-size: 16px; font-weight: 700; margin: 0 0 4px; letter-spacing: -.01em; }
+  p { margin: 0; }
+
+  .panel {
+    background: #0e0e10; border: 1px solid var(--line); border-radius: 14px;
+    padding: 32px; display: flex; align-items: center; justify-content: center;
+    overflow-x: auto;
+  }
+  .panel svg { display: block; max-width: 100%; height: auto; }
+
+  .stack { display: flex; flex-direction: column; align-items: center; gap: 34px; }
+  .spec { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .spec span { font-size: 12px; color: #93a49b; font-variant-numeric: tabular-nums; letter-spacing: .06em; }
+
+  .grid { display: grid; gap: 20px; }
+  .grid-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    padding: 20px; display: flex; flex-direction: column; gap: 10px;
+  }
+  .card .meta { font-size: 14px; color: var(--muted); }
+
+  .swatches { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; }
+  .swatch { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--surface); }
+  .chip { height: 76px; }
+  .swatch-info { padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; }
+  .swatch-info b { font-size: 13px; font-weight: 700; }
+  .swatch-info code { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; color: var(--muted); }
+  ul b { color: var(--text); font-weight: 600; }
+
+  code {
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+    background: var(--code-bg); border-radius: 5px; padding: 1px 6px; font-size: 13px;
+    color: var(--text);
+  }
+
+  .note {
+    border-left: 3px solid var(--green); background: var(--surface);
+    border-radius: 0 12px 12px 0; padding: 16px 20px; color: var(--muted); font-size: 15px;
+  }
+  .note b { color: var(--text); }
+  .note.warn { border-left-color: #d98a0b; }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="ndBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0fae5d"/><stop offset="55%" stop-color="#0a8f4c"/><stop offset="100%" stop-color="#066b39"/>
+    </linearGradient>
+    <g id="ndLogo">
+      <rect x="0" y="0" width="760" height="200" fill="#0e0e10"/>
+      <g transform="translate(20,20) scale(0.3125)">
+        <rect x="0" y="0" width="512" height="512" rx="118" fill="url(#ndBg)"/>
+        <circle cx="366" cy="140" r="150" fill="#ffffff" opacity="0.07"/>
+        <g stroke="#ffffff" stroke-linecap="round" stroke-width="16">
+          <line x1="76" y1="222" x2="126" y2="222"/>
+          <line x1="62" y1="282" x2="126" y2="282"/>
+          <line x1="90" y1="342" x2="126" y2="342"/>
+        </g>
+        <g fill="none" stroke="#ffffff" stroke-linecap="round" stroke-width="46">
+          <path d="M178 366 V182"/>
+          <path d="M178 182 L346 366"/>
+          <path d="M346 366 V182"/>
+        </g>
+      </g>
+      <text x="212" y="124" font-family="Montserrat, 'Segoe UI', Arial, sans-serif" font-size="66" font-weight="800" letter-spacing="1.5" fill="#ffffff">NOOR<tspan fill="#3fd68a">DRIVER</tspan></text>
+    </g>
+  </defs>
+</svg>
+
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">Identité visuelle</p>
+    <h1>NOORDRIVER</h1>
+    <p class="lede">
+      Un monogramme « N » blanc dans un badge vert, précédé de trois tirets de vitesse,
+      suivi du nom en capitales. Posé sur noir, sans baseline.
+      Vert repris de la palette déjà présente dans l'application.
+    </p>
+  </header>
+
+  <section>
+    <h2>Le logo</h2>
+    <div class="panel">
+      <svg viewBox="0 0 760 200" width="700" role="img" aria-label="NOORDRIVER — Covoiturage, Livraison, VTC"><use href="#ndLogo"/></svg>
+    </div>
+  </section>
+
+  <section>
+    <h2>Lisibilité aux différentes tailles</h2>
+    <div class="panel">
+      <div class="stack">
+        <div class="spec"><svg viewBox="0 0 760 200" width="520" aria-hidden="true"><use href="#ndLogo"/></svg><span>520 px — en-tête, écran de démarrage</span></div>
+        <div class="spec"><svg viewBox="0 0 760 200" width="340" aria-hidden="true"><use href="#ndLogo"/></svg><span>340 px — barre de navigation, e-mail</span></div>
+        <div class="spec"><svg viewBox="0 0 760 200" width="200" aria-hidden="true"><use href="#ndLogo"/></svg><span>200 px — bouton, signature</span></div>
+        <div class="spec"><svg viewBox="0 0 760 200" width="130" aria-hidden="true"><use href="#ndLogo"/></svg><span>130 px — taille plancher</span></div>
+      </div>
+    </div>
+    <p class="note">
+      Sans baseline, le logo tient beaucoup plus bas : <b>130 px de large</b> reste lisible.
+      En dessous, les trois tirets se referment sur le fût du N.
+    </p>
+  </section>
+
+  <section>
+    <h2>Palette</h2>
+    <div class="swatches">
+      <div class="swatch"><div class="chip" style="background:#0a8f4c"></div><div class="swatch-info"><b>Vert NoorDriver</b><code>#0a8f4c</code></div></div>
+      <div class="swatch"><div class="chip" style="background:#066b39"></div><div class="swatch-info"><b>Vert profond</b><code>#066b39</code></div></div>
+      <div class="swatch"><div class="chip" style="background:#0fae5d"></div><div class="swatch-info"><b>Vert clair</b><code>#0fae5d</code></div></div>
+      <div class="swatch"><div class="chip" style="background:#3fd68a"></div><div class="swatch-info"><b>Vert wordmark</b><code>#3fd68a</code></div></div>
+      <div class="swatch"><div class="chip" style="background:#0e0e10"></div><div class="swatch-info"><b>Noir (fond)</b><code>#0e0e10</code></div></div>
+      <div class="swatch"><div class="chip" style="background:#ffffff; box-shadow: inset 0 0 0 1px #dbe3de"></div><div class="swatch-info"><b>Blanc</b><code>#ffffff</code></div></div>
+    </div>
+    <p class="note">
+      Les trois verts et le noir sont exactement ceux déclarés dans <code>mobile/src/index.css</code>
+      et <code>admin/src/index.css</code>. La marque tient sur vert + blanc + noir, sans or.
+    </p>
+  </section>
+
+  <section>
+    <h2>Règles d'usage</h2>
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>Le fond noir fait partie du logo</h3>
+        <p class="meta">Le rectangle noir est intégré au fichier. Posez-le tel quel : ne le détourez pas pour le placer sur un fond clair, le wordmark blanc deviendrait invisible.</p>
+      </div>
+      <div class="card">
+        <h3>Ne pas déformer</h3>
+        <p class="meta">Redimensionnez toujours proportionnellement. Ne changez ni l'inclinaison de la diagonale, ni les couleurs, ni l'espacement du wordmark.</p>
+      </div>
+      <div class="card">
+        <h3>Les tirets restent à gauche</h3>
+        <p class="meta">Ils lisent le mouvement vers l'avant. Ne les déplacez pas à droite du N, ne les inclinez pas, n'en ajoutez pas un quatrième.</p>
+      </div>
+      <div class="card">
+        <h3>Trois métiers, un seul logo</h3>
+        <p class="meta">Covoiturage, livraison et VTC partagent la même marque. Différenciez par la couleur d'interface ou l'icône de service, pas par des variantes de logo.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Fichier</h2>
+    <p class="note">
+      <b><code>brand/noordriver-logo.svg</code></b> — le format de référence : vectoriel, net à
+      n'importe quelle taille, fond noir intégré. Accompagné de trois PNG rasterisés depuis ce
+      SVG : <code>760×200</code>, <code>1520×400</code> (Retina) et <code>2280×600</code>
+      (impression, grand format).
+    </p>
+    <p class="note warn">
+      <b>Il manquera une icône carrée</b> pour le favicon, l'icône de l'app mobile et l'avatar des
+      réseaux sociaux : ces emplacements sont carrés et n'acceptent pas un logo horizontal
+      (il serait rogné ou noyé dans du vide). Dites-le-moi quand vous voudrez que je la découpe
+      à partir du badge vert.
+    </p>
+  </section>
+
+  <section>
+    <h2>Intégration</h2>
+    <ul>
+      <li><b>Web / PWA</b> — copiez le fichier dans <code>mobile/public/</code>, puis référencez-le par <code>/noordriver-logo.svg</code>.</li>
+      <li><b>React</b> — <code>import logo from '../../brand/noordriver-logo.svg'</code> puis <code>&lt;img src={logo} alt="NoorDriver" /&gt;</code>.</li>
+      <li><b>Wordmark</b> — le texte utilise Montserrat 800 avec repli sur la police système. Pour un fichier définitif, il faut vectoriser le texte en tracés afin qu'il s'affiche à l'identique partout.</li>
+    </ul>
+  </section>
+
+</div>

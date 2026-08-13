@@ -1,0 +1,1 @@
+const axios = require('axios'); axios.post('https://noordrive-api.onrender.com/api/auth/login', {phone: 'test_123', name: 'Test', role: 'passager'}).then(r => console.log('OK', r.data.user.accountStatus)).catch(e => console.error(e.response ? e.response.status + ' ' + JSON.stringify(e.response.data) : e.message));

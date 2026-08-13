@@ -39,6 +39,80 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', time: new Date() });
 });
 
+// --- SOCKET.IO REALTIME LOGIC ---
+io.on('connection', (socket) => {
+  console.log('⚡ Client connected to Socket.io:', socket.id);
+
+  socket.on('join', (data) => {
+    // data can be { userId, role: 'driver' | 'passenger' }
+    if (data && data.userId) {
+      socket.join(data.userId);
+      console.log(`User ${data.userId} joined room`);
+    }
+  });
+
+  socket.on('driver_location_update', (data) => {
+    // Broadcast driver location to anyone listening (passengers tracking this driver)
+    // data = { driverId, lat, lng }
+    socket.broadcast.emit('driver_moved', data);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Client disconnected:', socket.id);
+  });
+});
+
+// --- SURGE PRICING API ---
+app.get('/api/surge-pricing', async (req, res) => {
+  try {
+    // Simulate real algorithm: If few drivers and many requests in last 10 mins = SURGE
+    const activeRequests = await prisma.serviceRequest.count({
+      where: { status: 'recherche' }
+    });
+    
+    // For demo purposes, we randomly activate surge or use a simple logic
+    // Let's force it to 1.4 if we have ANY active requests searching, otherwise 1.0
+    const surgeMultiplier = activeRequests > 0 ? 1.4 : 1.0;
+    
+    res.json({ multiplier: surgeMultiplier, activeRequests });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- NOOR AI ASSISTANT API ---
+app.post('/api/ai/parse-intent', async (req, res) => {
+  try {
+    const { text } = req.body;
+    // Simulate NLP / LLM extraction
+    // Example: "Trouve moi une voiture confort pour aller à l'Aéroport AIBD"
+    let type = 'ride';
+    let category = 'Standard';
+    let dropoff = null;
+
+    const lowerText = text.toLowerCase();
+    
+    if (lowerText.includes('confort')) category = 'Confort';
+    if (lowerText.includes('moto')) category = 'Moto';
+    if (lowerText.includes('colis') || lowerText.includes('livrer')) type = 'delivery';
+    
+    if (lowerText.includes('aéroport') || lowerText.includes('aibd')) {
+      dropoff = { lat: 14.67, lng: -17.07, label: 'Aéroport AIBD' };
+    } else if (lowerText.includes('almadies')) {
+      dropoff = { lat: 14.74, lng: -17.51, label: 'Les Almadies' };
+    } else if (lowerText.includes('plateau')) {
+      dropoff = { lat: 14.66, lng: -17.43, label: 'Dakar Plateau' };
+    }
+
+    res.json({ 
+      intentParsed: true, 
+      data: { type, category, dropoff } 
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Register or Login Endpoint
 app.post('/api/auth/login', async (req, res) => {
   const { phone, role, name, vehicle, referralCode } = req.body;

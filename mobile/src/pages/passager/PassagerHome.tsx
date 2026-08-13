@@ -1,9 +1,15 @@
 import { useMemo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Car, Bike, Sparkles, Package, Map, ArrowRight } from 'lucide-react';
+import { Car, Bike, Sparkles, Package, Map as MapIcon, ArrowRight, Zap } from 'lucide-react';
 import Layout from '../../components/Layout';
 import { useStore } from '../../store/useStore';
 import PlaceSelect from '../../components/PlaceSelect';
+import MapView from '../../components/MapView';
+import { formatFcfa } from '../../lib/geo';
+import type { GeoPoint, ServiceType } from '../../types';
+import { VILLES_INTERCITY, CITY_COORDS } from '../../lib/geo';
+import NoorAIBot from '../../components/NoorAIBot';
+import { api } from '../../lib/api';
 import OffersList from '../../components/OffersList';
 import TrackingPanel from '../../components/TrackingPanel';
 import MapView from '../../components/MapView';
@@ -18,18 +24,39 @@ import type { GeoPoint, ServiceType } from '../../types';
 
 
 export default function PassagerHome() {
-  const [tab, setTab] = useState<string>('ride');
-  const currentUser = useStore((s) => s.currentUser)!;
-  const allRequests = useStore((s) => s.requests);
-  const requests = useMemo(() => allRequests.filter((r) => r.passengerId === currentUser.id), [allRequests, currentUser.id]);
+  const [tab, setTab] = useState('demandes');
+  const currentUser = useStore((s) => s.currentUser);
+  const requests = useStore((s) => s.requests);
   const createRequest = useStore((s) => s.createRequest);
   const acceptOffer = useStore((s) => s.acceptOffer);
   const declineOffer = useStore((s) => s.declineOffer);
   const cancelRequest = useStore((s) => s.cancelRequest);
 
-  const activeRequest = requests.find(
-    (r) => r.status !== 'annule' && (r.status !== 'termine' || !r.ratingDriver),
+  const [surgeMultiplier, setSurgeMultiplier] = useState(1.0);
+  const [aiDropoff, setAiDropoff] = useState<GeoPoint | null>(null);
+  const [aiCategory, setAiCategory] = useState<any>(null);
+
+  useEffect(() => {
+    // Fetch Surge Pricing
+    api.get('/surge-pricing').then(res => {
+      if (res.data.multiplier) setSurgeMultiplier(res.data.multiplier);
+    }).catch(e => console.error(e));
+  }, []);
+
+  const handleAIIntent = (data: any) => {
+    setTab(data.type || 'ride');
+    if (data.dropoff) setAiDropoff(data.dropoff);
+    if (data.category) setAiCategory(data.category);
+  };
+
+  const myActives = requests.filter(
+    (r) =>
+      r.passengerId === currentUser?.id &&
+      r.status !== 'annule' &&
+      (r.status !== 'termine' || !r.ratingDriver)
   );
+
+  const activeRequest = myActives[0];
 
   if (activeRequest) {
     return (
@@ -112,19 +139,28 @@ export default function PassagerHome() {
         <MapView />
       </div>
       
+      {/* Surge Pricing Indicator */}
+      {surgeMultiplier > 1 && (
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[60] bg-red-600 text-white px-4 py-2 rounded-full shadow-lg font-bold text-xs flex items-center gap-2 animate-bounce">
+          <Zap className="w-4 h-4 fill-white" /> Majoration tarifaire (x{surgeMultiplier}) - Forte demande
+        </div>
+      )}
+
+      <NoorAIBot onIntentParsed={handleAIIntent} />
+      
       <div className="absolute bottom-0 left-0 right-0 z-10 pointer-events-none md:static md:flex-1 md:p-6 md:overflow-y-auto md:bg-gray-50 md:pointer-events-auto w-full">
         <div className="pointer-events-auto max-w-md mx-auto md:max-w-7xl md:w-full">
           <motion.div 
             initial={{ y: '100%' }} animate={{ y: 0 }} 
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="bg-white rounded-t-3xl md:rounded-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] p-5 md:p-8"
+            className="bg-white rounded-t-3xl md:rounded-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] p-5 md:p-8 relative"
           >
             <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4 md:hidden" />
             <div className="flex gap-3 mb-6 overflow-x-auto pb-2 no-scrollbar md:justify-center md:gap-4 md:pb-4 border-b border-gray-100">
               {[
                 { key: 'ride', label: 'Course', icon: <Car className="w-4 h-4" /> },
                 { key: 'delivery', label: 'Colis', icon: <Package className="w-4 h-4" /> },
-                { key: 'intercity', label: 'Interurbain', icon: <Map className="w-4 h-4" /> }
+                { key: 'intercity', label: 'Interurbain', icon: <MapIcon className="w-4 h-4" /> }
               ].map(t => (
                 <button
                   key={t.key}
@@ -139,8 +175,8 @@ export default function PassagerHome() {
             </div>
 
             <div className="md:mt-4">
-              {tab === 'ride' && <RideForm onCreate={createRequest} />}
-              {tab === 'delivery' && <DeliveryForm onCreate={createRequest} />}
+              {tab === 'ride' && <RideForm onCreate={createRequest} initialDropoff={aiDropoff} initialCategory={aiCategory} surgeMultiplier={surgeMultiplier} />}
+              {tab === 'delivery' && <DeliveryForm onCreate={createRequest} surgeMultiplier={surgeMultiplier} />}
               {tab === 'intercity' && <IntercityForm onCreate={createRequest} />}
             </div>
           </motion.div>
@@ -150,12 +186,17 @@ export default function PassagerHome() {
   );
 }
 
-function RideForm({ onCreate }: { onCreate: ReturnType<typeof useStore.getState>['createRequest'] }) {
+function RideForm({ onCreate, initialDropoff, initialCategory, surgeMultiplier }: { onCreate: ReturnType<typeof useStore.getState>['createRequest'], initialDropoff: any, initialCategory: any, surgeMultiplier: number }) {
   const [pickup, setPickup] = useState<GeoPoint | null>(null);
-  const [dropoff, setDropoff] = useState<GeoPoint | null>(null);
+  const [dropoff, setDropoff] = useState<GeoPoint | null>(initialDropoff);
   const [price, setPrice] = useState<number>(0);
   const [isMapFullscreen, setIsMapFullscreen] = useState(false);
-  const [category, setCategory] = useState<'Standard' | 'Confort' | 'Moto'>('Standard');
+  const [category, setCategory] = useState<'Standard' | 'Confort' | 'Moto'>(initialCategory || 'Standard');
+
+  useEffect(() => {
+    if (initialDropoff) setDropoff(initialDropoff);
+    if (initialCategory) setCategory(initialCategory);
+  }, [initialDropoff, initialCategory]);
 
   const allDrivers = useStore((s) => s.drivers);
   const nearbyCars = useMemo(() => {
@@ -322,7 +363,7 @@ function RideForm({ onCreate }: { onCreate: ReturnType<typeof useStore.getState>
   );
 }
 
-function DeliveryForm({ onCreate }: { onCreate: ReturnType<typeof useStore.getState>['createRequest'] }) {
+function DeliveryForm({ onCreate, surgeMultiplier }: { onCreate: ReturnType<typeof useStore.getState>['createRequest'], surgeMultiplier: number }) {
   const [pickup, setPickup] = useState<GeoPoint | null>(null);
   const [dropoff, setDropoff] = useState<GeoPoint | null>(null);
   const [price, setPrice] = useState<number>(0);
