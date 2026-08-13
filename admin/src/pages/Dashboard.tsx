@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
-import { Settings, Users, LogOut, CheckCircle2, LayoutDashboard, Activity, TrendingUp, Percent, Wallet, Download, Upload, Edit3, Trash2, Eye, X, Landmark, CheckCircle, XCircle, FileSpreadsheet, BarChart2, Users2, HelpCircle, Map, Gift, ShieldAlert } from 'lucide-react';
+import { Settings, Users, LogOut, CheckCircle2, LayoutDashboard, Activity, TrendingUp, Percent, Wallet, Download, Upload, Edit3, Trash2, Eye, X, Landmark, CheckCircle, XCircle, FileSpreadsheet, BarChart2, Users2, HelpCircle, Map, Gift, ShieldAlert, Headset, Building, AlertTriangle, Trophy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatFcfa } from '../lib/geo';
 import * as XLSX from 'xlsx';
@@ -290,6 +290,18 @@ export default function AdminHome() {
           </button>
           <button onClick={() => setTab('analytics')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'analytics' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
             <BarChart2 className="w-5 h-5" /> Data Intelligence
+          </button>
+          <button onClick={() => setTab('dispatcher')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'dispatcher' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
+            <Headset className="w-5 h-5" /> Dispatcher (Manuel)
+          </button>
+          <button onClick={() => setTab('fleet')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'fleet' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
+            <Building className="w-5 h-5" /> B2B & Flottes
+          </button>
+          <button onClick={() => setTab('sos')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'sos' ? 'bg-red-500/20 text-red-500' : 'text-red-400 hover:bg-red-500/10'}`}>
+            <AlertTriangle className="w-5 h-5" /> Centre d'Urgences
+          </button>
+          <button onClick={() => setTab('loyalty')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'loyalty' ? 'bg-yellow-500/20 text-yellow-500' : 'text-yellow-500/80 hover:bg-yellow-500/10'}`}>
+            <Trophy className="w-5 h-5" /> Programme VIP
           </button>
           <div className="border-t border-gray-800 my-2 pt-2">
             <button onClick={() => setTab('support')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'support' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
@@ -830,6 +842,177 @@ export default function AdminHome() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {tab === 'dispatcher' && (
+          <div className="space-y-6">
+            <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-2"><Headset className="w-8 h-8 text-noordrive-green" /> Dispatcher (Commandes Manuelles)</h2>
+            <div className="grid grid-cols-3 gap-6">
+              <div className="col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <h3 className="font-bold text-lg mb-4 border-b pb-2">Nouvelle Course</h3>
+                <form className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase">Téléphone du client</label>
+                    <input type="text" placeholder="+221 77 000 00 00" className="w-full border p-2 rounded mt-1 bg-gray-50 focus:bg-white focus:outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase">Point de départ</label>
+                    <input type="text" placeholder="Aéroport AIBD" className="w-full border p-2 rounded mt-1 bg-gray-50 focus:bg-white focus:outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase">Point d'arrivée</label>
+                    <input type="text" placeholder="Plateau, Dakar" className="w-full border p-2 rounded mt-1 bg-gray-50 focus:bg-white focus:outline-none" />
+                  </div>
+                  <div className="pt-2 border-t mt-4">
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Assignation Forcée (Optionnel)</label>
+                    <select className="w-full border p-2 rounded bg-white focus:outline-none">
+                      <option>Automatique (Le plus proche)</option>
+                      <option>ID #102 - Oumar T. (À 2min)</option>
+                      <option>ID #88 - Seydou N. (À 5min)</option>
+                    </select>
+                  </div>
+                  <div className="bg-gray-100 p-3 rounded-xl flex justify-between items-center font-bold">
+                    <span>Prix Estimé</span>
+                    <span className="text-noordrive-green text-lg">15 000 F</span>
+                  </div>
+                  <button type="button" className="w-full bg-noordrive-black text-white font-bold py-3 rounded-xl hover:bg-gray-800 shadow-lg mt-2 transition">Lancer la commande</button>
+                </form>
+              </div>
+              <div className="col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-2 relative overflow-hidden min-h-[500px] flex items-center justify-center">
+                 <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(#4b5563 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+                 <div className="relative z-10 text-center text-gray-600 bg-white/90 p-6 rounded-2xl backdrop-blur border shadow-xl">
+                   <Map className="w-16 h-16 mx-auto mb-4 text-noordrive-green" />
+                   <p className="font-bold text-xl mb-2">Carte Dispatcher</p>
+                   <p className="text-sm">Cliquez sur la carte pour définir les points de départ/arrivée.</p>
+                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {tab === 'fleet' && (
+          <div className="space-y-6">
+            <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-2"><Building className="w-8 h-8 text-noordrive-green" /> Gestion des Flottes & B2B</h2>
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+               <div className="flex justify-between items-center mb-6">
+                 <h3 className="font-bold text-xl">Propriétaires de Flotte (Fleet Partners)</h3>
+                 <button className="bg-noordrive-green text-white px-4 py-2 rounded-lg font-bold hover:brightness-105 shadow transition">+ Nouveau Propriétaire</button>
+               </div>
+               <table className="w-full text-left text-sm">
+                  <thead className="bg-gray-50 border-b">
+                     <tr>
+                        <th className="p-4 font-semibold">Propriétaire</th>
+                        <th className="p-4 font-semibold">Véhicules Actifs</th>
+                        <th className="p-4 font-semibold">Chauffeurs Locataires</th>
+                        <th className="p-4 font-semibold">Revenus (Semaine)</th>
+                        <th className="p-4 font-semibold text-right">Action</th>
+                     </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                     <tr className="hover:bg-gray-50">
+                        <td className="p-4 font-bold text-gray-800">Entreprise SN Express</td>
+                        <td className="p-4">12 voitures</td>
+                        <td className="p-4">15 chauffeurs</td>
+                        <td className="p-4 font-bold text-noordrive-green">450 000 F</td>
+                        <td className="p-4 text-right"><button className="text-blue-500 font-bold hover:underline">Gérer</button></td>
+                     </tr>
+                     <tr className="hover:bg-gray-50">
+                        <td className="p-4 font-bold text-gray-800">Alioune Fall</td>
+                        <td className="p-4">3 voitures</td>
+                        <td className="p-4">3 chauffeurs</td>
+                        <td className="p-4 font-bold text-noordrive-green">85 000 F</td>
+                        <td className="p-4 text-right"><button className="text-blue-500 font-bold hover:underline">Gérer</button></td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+          </div>
+        )}
+
+        {tab === 'sos' && (
+          <div className="space-y-6">
+            <div className="bg-red-600 rounded-2xl shadow-xl p-8 text-white relative overflow-hidden">
+               <div className="absolute top-0 right-0 p-8 opacity-10"><AlertTriangle className="w-64 h-64" /></div>
+               <h2 className="text-4xl font-black mb-2 relative z-10 flex items-center gap-3"><AlertTriangle className="w-10 h-10" /> Centre d'Urgences SOS</h2>
+               <p className="text-red-100 font-medium relative z-10 text-lg">Monitoring en temps réel des alertes de sécurité des utilisateurs et chauffeurs.</p>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-6">
+               <div className="bg-white p-6 rounded-2xl shadow-sm border-2 border-red-100">
+                  <h3 className="font-bold text-xl text-red-600 mb-4 flex items-center gap-2"><div className="w-3 h-3 bg-red-500 rounded-full animate-ping"></div> Alertes Actives (1)</h3>
+                  <div className="border border-red-200 bg-red-50 p-4 rounded-xl">
+                     <div className="flex justify-between items-start mb-2">
+                       <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">SOS Déclenché</span>
+                       <span className="text-red-500 text-xs font-bold">Il y a 2 min</span>
+                     </div>
+                     <p className="font-bold text-gray-800">Passagère: Aissatou D.</p>
+                     <p className="text-sm text-gray-700">Chauffeur: Moussa S. (Toyota Corolla - DK 1234 A)</p>
+                     <p className="text-sm text-gray-700 mt-2">Dernière position GPS: VDN, Mermoz</p>
+                     
+                     <div className="grid grid-cols-2 gap-2 mt-4">
+                       <button className="bg-white border-2 border-red-200 text-red-600 font-bold py-2 rounded-lg hover:bg-red-100 flex justify-center items-center gap-2 transition">🎧 Écouter Micro</button>
+                       <button className="bg-red-600 text-white font-bold py-2 rounded-lg hover:bg-red-700 flex justify-center items-center gap-2 transition shadow-lg">🚓 Contacter Police</button>
+                     </div>
+                  </div>
+               </div>
+               
+               <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                  <h3 className="font-bold text-lg text-gray-800 mb-4">Historique des Incidents</h3>
+                  <div className="space-y-3">
+                     <div className="p-3 border rounded-xl flex justify-between items-center opacity-70">
+                       <div>
+                         <p className="font-bold text-sm text-gray-800">Dispute Tarifaire</p>
+                         <p className="text-xs text-gray-500">Hier - Chauffeur ID #45</p>
+                       </div>
+                       <span className="text-xs bg-green-100 text-green-700 font-bold px-2 py-1 rounded">Résolu</span>
+                     </div>
+                  </div>
+               </div>
+            </div>
+          </div>
+        )}
+
+        {tab === 'loyalty' && (
+          <div className="space-y-6">
+            <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-2"><Trophy className="w-8 h-8 text-yellow-500" /> Gamification & VIP</h2>
+            <div className="grid grid-cols-2 gap-6">
+               <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-t-4 border-t-yellow-400">
+                  <h3 className="font-bold text-xl mb-4 text-gray-800">Passagers VIP (NoorDrive Gold)</h3>
+                  <p className="text-sm text-gray-600 mb-4">Clients ayant effectué plus de 50 courses ce mois-ci.</p>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center p-3 border rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center font-bold">1</div>
+                        <span className="font-bold text-gray-800">Cheikh Fall</span>
+                      </div>
+                      <span className="text-sm text-gray-500">62 courses</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 border rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center font-bold">2</div>
+                        <span className="font-bold text-gray-800">Fatou Ndiaye</span>
+                      </div>
+                      <span className="text-sm text-gray-500">58 courses</span>
+                    </div>
+                  </div>
+                  <button className="w-full mt-4 bg-yellow-50 text-yellow-700 font-bold py-2 rounded-lg hover:bg-yellow-100 transition">Configurer les avantages VIP</button>
+               </div>
+
+               <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-t-4 border-t-blue-500">
+                  <h3 className="font-bold text-xl mb-4 text-gray-800">Quêtes Chauffeurs</h3>
+                  <div className="p-4 border rounded-xl mb-4">
+                     <div className="flex justify-between items-center mb-2">
+                       <span className="font-bold text-blue-600">Challenge du Weekend</span>
+                       <span className="text-xs bg-blue-100 text-blue-700 font-bold px-2 py-1 rounded">Actif</span>
+                     </div>
+                     <p className="text-sm mb-3 text-gray-700">Réaliser 20 courses entre Vendredi 18h et Dimanche 23h pour débloquer un bonus de 10 000 FCFA.</p>
+                     <div className="w-full bg-gray-100 h-2 rounded-full mb-1"><div className="bg-blue-500 h-2 rounded-full" style={{ width: '45%' }}></div></div>
+                     <p className="text-xs text-right text-gray-500">45 chauffeurs ont complété (450 000 F provisionnés)</p>
+                  </div>
+                  <button className="w-full border-2 border-dashed border-gray-300 text-gray-500 font-bold py-3 rounded-xl hover:bg-gray-50 transition">+ Créer une nouvelle quête</button>
+               </div>
             </div>
           </div>
         )}
