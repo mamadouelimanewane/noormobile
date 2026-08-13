@@ -148,7 +148,7 @@ export default function PassagerHome() {
           <motion.div 
             initial={{ y: '100%' }} animate={{ y: 0 }} 
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="bg-white rounded-t-3xl md:rounded-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] p-5 md:p-8 relative"
+            className="bg-white rounded-t-3xl md:rounded-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] p-5 md:p-8 relative max-h-[85vh] overflow-y-auto no-scrollbar flex flex-col"
           >
             <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4 md:hidden" />
             <div className="flex gap-3 mb-6 overflow-x-auto pb-2 no-scrollbar md:justify-center md:gap-4 md:pb-4 border-b border-gray-100">
@@ -332,7 +332,7 @@ function RideForm({ onCreate, initialDropoff, initialCategory }: { onCreate: Ret
         </button>
       </form>
       
-      <div className={`${isMapFullscreen ? 'fixed inset-0 z-50 bg-white' : 'h-72 md:h-[600px] rounded-3xl overflow-hidden shadow-sm border border-gray-100'} w-full flex flex-col`}>
+      <div className={`${isMapFullscreen ? 'fixed inset-0 z-50 bg-white' : 'hidden md:flex md:h-[600px] rounded-3xl overflow-hidden shadow-sm border border-gray-100'} w-full flex-col`}>
         {isMapFullscreen && (
           <div className="absolute top-4 left-4 z-[60] flex flex-col gap-2">
             <button onClick={() => setIsMapFullscreen(false)} className="bg-white px-5 py-3 rounded-full shadow-xl font-black text-black border flex items-center gap-2">← Retour au formulaire</button>
@@ -489,7 +489,7 @@ function DeliveryForm({ onCreate }: { onCreate: ReturnType<typeof useStore.getSt
         </button>
       </form>
       
-      <div className={`${isMapFullscreen ? 'fixed inset-0 z-50 bg-white' : 'h-72 md:h-[600px] rounded-3xl overflow-hidden shadow-sm border border-gray-100'} w-full flex flex-col`}>
+      <div className={`${isMapFullscreen ? 'fixed inset-0 z-50 bg-white' : 'hidden md:flex md:h-[600px] rounded-3xl overflow-hidden shadow-sm border border-gray-100'} w-full flex-col`}>
         {isMapFullscreen && (
           <div className="absolute top-4 left-4 z-[60] flex flex-col gap-2">
             <button onClick={() => setIsMapFullscreen(false)} className="bg-white px-5 py-3 rounded-full shadow-xl font-black text-black border flex items-center gap-2">← Retour au formulaire</button>
@@ -590,7 +590,7 @@ function IntercityForm({ onCreate }: { onCreate: ReturnType<typeof useStore.getS
           Réserver le trajet
         </button>
       </form>
-      <div className="h-72 md:h-[600px] w-full rounded-3xl overflow-hidden shadow-sm border border-gray-100">
+      <div className="hidden md:block md:h-[600px] w-full rounded-3xl overflow-hidden shadow-sm border border-gray-100">
         <MapView pickup={pickup} dropoff={dropoff} center={pickup} />
       </div>
     </div>

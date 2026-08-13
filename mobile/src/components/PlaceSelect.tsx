@@ -53,23 +53,31 @@ export default function PlaceSelect({ label, value, onChange }: PlaceSelectProps
   }, [query, value]);
 
   return (
-    <div ref={wrapperRef} className="relative">
-      <label className="text-xs font-medium text-gray-500">{label}</label>
-      <input
-        type="text"
-        value={query}
-        onChange={(e) => {
-          setQuery(e.target.value);
-          setIsOpen(true);
-        }}
-        onFocus={() => {
-          setIsOpen(true);
-        }}
-        placeholder="Entrez une adresse..."
-        className="w-full border rounded-lg px-3 py-2 mt-1"
-      />
+    <div ref={wrapperRef} className="relative w-full">
+      <div className="relative flex items-center bg-gray-50/50 hover:bg-gray-50 focus-within:bg-white border-2 border-transparent focus-within:border-black rounded-2xl transition-all duration-300 overflow-hidden shadow-sm">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setIsOpen(true);
+          }}
+          onFocus={() => setIsOpen(true)}
+          placeholder={label}
+          className="w-full bg-transparent px-4 py-3.5 text-sm font-bold text-gray-900 placeholder-gray-400 focus:outline-none"
+        />
+        {query && (
+          <button 
+            onClick={() => { setQuery(''); onChange(null as any); }}
+            className="p-3 text-gray-400 hover:text-gray-600 transition"
+          >
+            ✕
+          </button>
+        )}
+      </div>
+      
       {isOpen && (results.length > 0 || !query) && (
-        <ul className="absolute z-50 left-0 right-0 top-[100%] bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto mt-1">
+        <ul className="absolute z-50 left-0 right-0 top-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] max-h-72 overflow-y-auto overflow-x-hidden no-scrollbar py-2">
           {results.length === 0 && !query && (
             <li
               onClick={() => {
@@ -87,13 +95,14 @@ export default function PlaceSelect({ label, value, onChange }: PlaceSelectProps
                     },
                     { enableHighAccuracy: true }
                   );
-                } else {
-                  alert('Géolocalisation non supportée par votre appareil.');
                 }
               }}
-              className="px-3 py-3 border-b hover:bg-gray-50 cursor-pointer text-sm flex items-center gap-2 text-blue-600 font-semibold"
+              className="px-4 py-3 hover:bg-gray-50 cursor-pointer flex items-center gap-3 transition-colors group"
             >
-              <span className="text-xl">📍</span> Utiliser ma position actuelle
+              <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                📍
+              </div>
+              <div className="text-sm font-bold text-blue-600">Utiliser ma position actuelle</div>
             </li>
           )}
           {results.length === 0 && !query && savedPlaces.map((sp, i) => (
@@ -104,10 +113,12 @@ export default function PlaceSelect({ label, value, onChange }: PlaceSelectProps
                 setIsOpen(false);
                 onChange({ lat: sp.lat, lng: sp.lng, label: sp.label });
               }}
-              className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm flex items-center gap-2"
+              className="px-4 py-3 hover:bg-gray-50 cursor-pointer flex items-center gap-3 transition-colors group"
             >
-              <span className="text-gray-400">★</span>
-              <div className="font-semibold">{sp.label}</div>
+              <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center group-hover:bg-yellow-50 group-hover:text-yellow-500 transition-colors">
+                ★
+              </div>
+              <div className="text-sm font-bold text-gray-700">{sp.label}</div>
             </li>
           ))}
           {results.map((r, i) => (
@@ -119,10 +130,15 @@ export default function PlaceSelect({ label, value, onChange }: PlaceSelectProps
                 setIsOpen(false);
                 onChange(point);
               }}
-              className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+              className="px-4 py-3 hover:bg-gray-50 cursor-pointer flex items-center gap-3 transition-colors"
             >
-              <div className="font-semibold">{r.display_place || r.display_name.split(',')[0]}</div>
-              <div className="text-xs text-gray-500 truncate">{r.display_address}</div>
+              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                📍
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <div className="text-sm font-bold text-gray-900 truncate">{r.display_place || r.display_name.split(',')[0]}</div>
+                <div className="text-xs text-gray-500 truncate">{r.display_address}</div>
+              </div>
             </li>
           ))}
         </ul>
