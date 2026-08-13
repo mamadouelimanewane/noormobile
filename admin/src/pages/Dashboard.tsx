@@ -266,7 +266,7 @@ export default function AdminHome() {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
-      <div className="w-64 bg-noordrive-black text-white p-6 flex flex-col fixed h-full z-10">
+      <div className="w-64 bg-noordrive-black text-white p-6 flex flex-col fixed h-full z-10 overflow-y-auto">
         <h1 className="text-2xl font-black tracking-tighter mb-10"><span className="text-noordrive-green">●</span> ADMIN</h1>
         
         <nav className="flex-1 space-y-2">
