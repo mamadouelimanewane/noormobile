@@ -48,10 +48,10 @@ export default function NoorAIBot({ onIntentParsed }: NoorAIBotProps) {
     if (isListening) {
       stopListening();
     } else {
-      startListening((transcript) => {
+      startListening((_, transcript) => {
         setText(transcript);
         // On pourrait auto-submit ici, mais laissons l'utilisateur valider
-      });
+      }, true);
     }
   };
 

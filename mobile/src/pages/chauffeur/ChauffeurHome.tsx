@@ -383,7 +383,7 @@ function DemandesTab({ requests, driverId }: { requests: ServiceRequest[]; drive
                     <button
                       onClick={() => {
                         if (isListening) stopListening();
-                        else startListening((amount) => driverMakeOffer(r.id, driverId, amount, 5));
+                        else startListening((amount) => { if (amount !== null) driverMakeOffer(r.id, driverId, amount, 5); });
                       }}
                       className={`flex justify-center items-center rounded-lg transition-colors ${isListening ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
                     >

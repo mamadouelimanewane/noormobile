@@ -5,14 +5,10 @@ import Layout from '../../components/Layout';
 import { useStore } from '../../store/useStore';
 import PlaceSelect from '../../components/PlaceSelect';
 import MapView from '../../components/MapView';
-import { formatFcfa } from '../../lib/geo';
-import type { GeoPoint, ServiceType } from '../../types';
-import { VILLES_INTERCITY, CITY_COORDS } from '../../lib/geo';
 import NoorAIBot from '../../components/NoorAIBot';
 import { api } from '../../lib/api';
 import OffersList from '../../components/OffersList';
 import TrackingPanel from '../../components/TrackingPanel';
-import MapView from '../../components/MapView';
 import ParrainageTab from '../../components/ParrainageTab';
 import Wallet from '../../components/Wallet';
 import PassengerCarpool from '../../components/PassengerCarpool';
@@ -21,7 +17,6 @@ import { formatFcfa, distanceKm } from '../../lib/geo';
 import { CITY_COORDS } from '../../data/cities';
 import { VILLES_INTERCITY } from '../../types';
 import type { GeoPoint, ServiceType } from '../../types';
-
 
 export default function PassagerHome() {
   const [tab, setTab] = useState('demandes');
@@ -123,7 +118,7 @@ export default function PassagerHome() {
     return (
       <Layout activeTab={tab} onTabChange={setTab}>
         <div className="pt-16 max-w-xl mx-auto w-full">
-          {tab === 'historique' && <Historique requests={requests.filter((r) => r.passengerId === currentUser.id)} />}
+          {tab === 'historique' && <Historique requests={requests.filter((r) => r.passengerId === currentUser?.id)} />}
           {tab === 'portefeuille' && <Wallet />}
           {tab === 'covoiturage' && <PassengerCarpool />}
           {tab === 'support' && <Support />}
@@ -175,8 +170,8 @@ export default function PassagerHome() {
             </div>
 
             <div className="md:mt-4">
-              {tab === 'ride' && <RideForm onCreate={createRequest} initialDropoff={aiDropoff} initialCategory={aiCategory} surgeMultiplier={surgeMultiplier} />}
-              {tab === 'delivery' && <DeliveryForm onCreate={createRequest} surgeMultiplier={surgeMultiplier} />}
+              {tab === 'ride' && <RideForm onCreate={createRequest} initialDropoff={aiDropoff} initialCategory={aiCategory} />}
+              {tab === 'delivery' && <DeliveryForm onCreate={createRequest} />}
               {tab === 'intercity' && <IntercityForm onCreate={createRequest} />}
             </div>
           </motion.div>
@@ -186,7 +181,7 @@ export default function PassagerHome() {
   );
 }
 
-function RideForm({ onCreate, initialDropoff, initialCategory, surgeMultiplier }: { onCreate: ReturnType<typeof useStore.getState>['createRequest'], initialDropoff: any, initialCategory: any, surgeMultiplier: number }) {
+function RideForm({ onCreate, initialDropoff, initialCategory }: { onCreate: ReturnType<typeof useStore.getState>['createRequest'], initialDropoff: any, initialCategory: any }) {
   const [pickup, setPickup] = useState<GeoPoint | null>(null);
   const [dropoff, setDropoff] = useState<GeoPoint | null>(initialDropoff);
   const [price, setPrice] = useState<number>(0);
@@ -201,7 +196,7 @@ function RideForm({ onCreate, initialDropoff, initialCategory, surgeMultiplier }
   const allDrivers = useStore((s) => s.drivers);
   const nearbyCars = useMemo(() => {
     if (!pickup) return [];
-    return Object.values(allDrivers).filter(d => d.isOnline && (category === 'Moto' ? d.vehicle?.category === 'Moto' : true)).slice(0, 5).map(d => d.position);
+    return Object.values(allDrivers).filter(d => d.isOnline && (category === 'Moto' ? (d.vehicle as any)?.category === 'Moto' : true)).slice(0, 5).map(d => d.position);
   }, [pickup, allDrivers, category]);
 
   const [suggestion, setSuggestion] = useState<number | null>(null);
@@ -233,7 +228,7 @@ function RideForm({ onCreate, initialDropoff, initialCategory, surgeMultiplier }
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!pickup || !dropoff || price <= 0) return;
-    onCreate({ type: 'ride' as ServiceType, pickup, dropoff, proposedPrice: price, category });
+    onCreate({ type: 'ride' as ServiceType, pickup, dropoff, proposedPrice: price });
   }
 
   function handleMapClick(point: GeoPoint) {
@@ -363,7 +358,7 @@ function RideForm({ onCreate, initialDropoff, initialCategory, surgeMultiplier }
   );
 }
 
-function DeliveryForm({ onCreate, surgeMultiplier }: { onCreate: ReturnType<typeof useStore.getState>['createRequest'], surgeMultiplier: number }) {
+function DeliveryForm({ onCreate }: { onCreate: ReturnType<typeof useStore.getState>['createRequest'] }) {
   const [pickup, setPickup] = useState<GeoPoint | null>(null);
   const [dropoff, setDropoff] = useState<GeoPoint | null>(null);
   const [price, setPrice] = useState<number>(0);
@@ -546,7 +541,7 @@ function IntercityForm({ onCreate }: { onCreate: ReturnType<typeof useStore.getS
     <div className="grid md:grid-cols-2 gap-6">
       <form onSubmit={handleSubmit} className="bg-white border border-gray-100 rounded-3xl p-6 space-y-6 shadow-sm">
         <div>
-          <h2 className="font-black text-2xl mb-1 text-gray-800 flex items-center gap-2"><Map className="text-blue-500" /> Covoiturage</h2>
+          <h2 className="font-black text-2xl mb-1 text-gray-800 flex items-center gap-2"><MapIcon className="text-blue-500" /> Covoiturage</h2>
           <p className="text-sm text-gray-500 font-medium">Voyagez entre les villes du pays.</p>
         </div>
         

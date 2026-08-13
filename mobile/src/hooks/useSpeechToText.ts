@@ -42,7 +42,7 @@ export function useSpeechToText() {
     return num > 0 ? num : null;
   };
 
-  const startListening = useCallback((onResult: (amount: number) => void) => {
+  const startListening = useCallback((onResult: (amount: number | null, rawTranscript: string) => void, rawMode = false) => {
     if (!isSupported) {
       toast.error('La reconnaissance vocale n\'est pas supportée sur ce navigateur.');
       return;
@@ -64,12 +64,16 @@ export function useSpeechToText() {
         const transcript = event.results[0][0].transcript;
         console.log('🗣️ Voix captée :', transcript);
         
-        const amount = extractNumber(transcript);
-        if (amount && amount >= 500) {
-          toast.success(`Montant compris : ${amount} FCFA`);
-          onResult(amount);
+        if (rawMode) {
+          onResult(null, transcript);
         } else {
-          toast.error(`Je n'ai pas compris le montant ("${transcript}"). Répétez plus fort.`);
+          const amount = extractNumber(transcript);
+          if (amount && amount >= 500) {
+            toast.success(`Montant compris : ${amount} FCFA`);
+            onResult(amount, transcript);
+          } else {
+            toast.error(`Je n'ai pas compris le montant ("${transcript}"). Répétez plus fort.`);
+          }
         }
       };
 
