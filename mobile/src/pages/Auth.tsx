@@ -79,6 +79,9 @@ export default function Auth() {
     } catch (err: any) {
       const msg = err.response?.data?.error || err.message || 'Erreur de connexion';
       setError(typeof msg === 'string' ? msg : JSON.stringify(msg));
+    }
+  }
+
   return (
     <div className="min-h-screen bg-noordrive-black flex items-center justify-center px-4 transition-colors duration-500">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
