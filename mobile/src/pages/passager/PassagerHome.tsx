@@ -351,7 +351,13 @@ function RideForm({ onCreate, initialDropoff, initialCategory }: { onCreate: Ret
         )}
 
         <div className="flex-1 w-full relative">
-          <MapView pickup={pickup ?? undefined} dropoff={dropoff ?? undefined} onMapClick={handleMapClick} nearbyCars={nearbyCars} />
+          {isMapFullscreen ? (
+            <MapView key="fullscreen-map" pickup={pickup ?? undefined} dropoff={dropoff ?? undefined} onMapClick={handleMapClick} nearbyCars={nearbyCars} />
+          ) : (
+            <div className="hidden md:block w-full h-full">
+              <MapView key="inline-map" pickup={pickup ?? undefined} dropoff={dropoff ?? undefined} onMapClick={handleMapClick} nearbyCars={nearbyCars} />
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -508,7 +514,13 @@ function DeliveryForm({ onCreate }: { onCreate: ReturnType<typeof useStore.getSt
         )}
 
         <div className="flex-1 w-full relative">
-          <MapView pickup={pickup ?? undefined} dropoff={dropoff ?? undefined} onMapClick={handleMapClick} nearbyCars={nearbyCars} />
+          {isMapFullscreen ? (
+            <MapView key="fullscreen-map" pickup={pickup ?? undefined} dropoff={dropoff ?? undefined} onMapClick={handleMapClick} nearbyCars={nearbyCars} />
+          ) : (
+            <div className="hidden md:block w-full h-full">
+              <MapView key="inline-map" pickup={pickup ?? undefined} dropoff={dropoff ?? undefined} onMapClick={handleMapClick} nearbyCars={nearbyCars} />
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -591,7 +603,7 @@ function IntercityForm({ onCreate }: { onCreate: ReturnType<typeof useStore.getS
         </button>
       </form>
       <div className="hidden md:block md:h-[600px] w-full rounded-3xl overflow-hidden shadow-sm border border-gray-100">
-        <MapView pickup={pickup} dropoff={dropoff} center={pickup} />
+        <MapView key="inline-map-intercity" pickup={pickup} dropoff={dropoff} center={pickup} />
       </div>
     </div>
   );
