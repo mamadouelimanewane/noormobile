@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
-import { Settings, Users, LogOut, CheckCircle2, LayoutDashboard, Activity, TrendingUp, Percent, Wallet, Download, Upload, Edit3, Trash2, Eye, X, Landmark, CheckCircle, XCircle, FileSpreadsheet, BarChart2, Users2, HelpCircle } from 'lucide-react';
+import { Settings, Users, LogOut, CheckCircle2, LayoutDashboard, Activity, TrendingUp, Percent, Wallet, Download, Upload, Edit3, Trash2, Eye, X, Landmark, CheckCircle, XCircle, FileSpreadsheet, BarChart2, Users2, HelpCircle, Map, Gift, ShieldAlert } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatFcfa } from '../lib/geo';
 import * as XLSX from 'xlsx';
@@ -273,30 +273,41 @@ export default function AdminHome() {
           <button onClick={() => setTab('dashboard')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'dashboard' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
             <LayoutDashboard className="w-5 h-5" /> Vue d'ensemble
           </button>
-          <button onClick={() => setTab('finances')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'finances' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
-            <Wallet className="w-5 h-5" /> Finances & Comptabilité
+          <button onClick={() => setTab('liveops')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'liveops' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
+            <Map className="w-5 h-5" /> Live Operations
           </button>
           <button onClick={() => setTab('users')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'users' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
             <Users className="w-5 h-5" /> CRM Utilisateurs
           </button>
+          <button onClick={() => setTab('finances')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'finances' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
+            <Wallet className="w-5 h-5" /> Finances & Compta
+          </button>
+          <button onClick={() => setTab('marketing')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'marketing' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
+            <Gift className="w-5 h-5" /> Marketing & Promo
+          </button>
+          <button onClick={() => setTab('risk')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'risk' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
+            <ShieldAlert className="w-5 h-5" /> Risques & Fraudes
+          </button>
           <button onClick={() => setTab('analytics')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'analytics' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
-            <BarChart2 className="w-5 h-5" /> Analyse & Export
+            <BarChart2 className="w-5 h-5" /> Data Intelligence
           </button>
-          <button onClick={() => setTab('tontines')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'tontines' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
-            <Users2 className="w-5 h-5" /> Tontine (Nat)
-          </button>
-          <button onClick={() => setTab('support')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'support' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
-            <HelpCircle className="w-5 h-5" /> Support Client
-          </button>
-          <button onClick={() => setTab('loans')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'loans' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
-            <Landmark className="w-5 h-5" /> Micro-crédits
-          </button>
-          <button onClick={() => setTab('taxes')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'taxes' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
-            <Percent className="w-5 h-5" /> Moteur de Taxes
-          </button>
-          <button onClick={() => setTab('settings')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'settings' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
-            <Settings className="w-5 h-5" /> Paramètres Globaux
-          </button>
+          <div className="border-t border-gray-800 my-2 pt-2">
+            <button onClick={() => setTab('support')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'support' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
+              <HelpCircle className="w-5 h-5" /> Support Client
+            </button>
+            <button onClick={() => setTab('tontines')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'tontines' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
+              <Users2 className="w-5 h-5" /> Tontine (Nat)
+            </button>
+            <button onClick={() => setTab('loans')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'loans' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
+              <Landmark className="w-5 h-5" /> Micro-crédits
+            </button>
+            <button onClick={() => setTab('taxes')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'taxes' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
+              <Percent className="w-5 h-5" /> Moteur de Taxes
+            </button>
+            <button onClick={() => setTab('settings')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'settings' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
+              <Settings className="w-5 h-5" /> Paramètres
+            </button>
+          </div>
         </nav>
 
         <button onClick={() => { logout(); navigate('/'); }} className="flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500/10 rounded-xl transition mt-auto">
@@ -322,6 +333,229 @@ export default function AdminHome() {
               <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
                 <div className="w-14 h-14 rounded-xl bg-purple-50 flex items-center justify-center text-purple-500"><TrendingUp className="w-7 h-7" /></div>
                 <div><p className="text-gray-500 text-sm font-semibold">Revenus (Commissions)</p><p className="text-2xl font-bold text-noordrive-green">{formatFcfa(stats.totalRevenue)}</p></div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {tab === 'liveops' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-2"><Map className="w-8 h-8 text-noordrive-green"/> Live Operations & Geofencing</h2>
+              <div className="flex gap-2">
+                <button className="bg-red-500 text-white px-4 py-2 rounded-xl font-bold hover:bg-red-600 transition shadow-lg">⚡ Activer Surge Pricing Global</button>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-3 gap-6">
+              {/* Carte Principale */}
+              <div className="col-span-2 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm min-h-[600px] flex flex-col relative overflow-hidden">
+                <div className="absolute top-6 left-6 z-10 bg-white/90 backdrop-blur p-4 rounded-xl shadow-lg border border-gray-100">
+                  <h3 className="font-bold text-sm mb-3">Filtres Carte</h3>
+                  <div className="space-y-3 text-sm">
+                     <label className="flex items-center gap-3 cursor-pointer"><input type="checkbox" defaultChecked className="w-4 h-4 accent-noordrive-green" /> Heatmap Demande</label>
+                     <label className="flex items-center gap-3 cursor-pointer"><input type="checkbox" defaultChecked className="w-4 h-4 accent-noordrive-green" /> Chauffeurs Actifs (142)</label>
+                     <label className="flex items-center gap-3 cursor-pointer"><input type="checkbox" defaultChecked className="w-4 h-4 accent-noordrive-green" /> Trajets en cours (38)</label>
+                  </div>
+                </div>
+                <div className="flex-1 bg-[#e5e3df] rounded-xl border flex items-center justify-center relative">
+                   {/* Fausse carte pour le visuel */}
+                   <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'radial-gradient(#4b5563 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+                   <div className="relative z-10 text-center text-gray-600 bg-white/80 p-6 rounded-2xl backdrop-blur">
+                     <Map className="w-16 h-16 mx-auto mb-4 text-noordrive-green" />
+                     <p className="font-bold text-xl mb-2">God View Map</p>
+                     <p className="text-sm">En attente de connexion au flux WebSocket GPS</p>
+                   </div>
+                </div>
+              </div>
+
+              {/* Panneau latéral Live */}
+              <div className="space-y-6">
+                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                  <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><Activity className="w-5 h-5 text-blue-500"/> Trajets en direct</h3>
+                  <div className="space-y-3">
+                    {[1,2,3].map(i => (
+                      <div key={i} className="p-3 border rounded-xl hover:bg-gray-50 cursor-pointer transition">
+                        <div className="flex justify-between items-start mb-2">
+                           <span className="text-xs font-bold bg-blue-100 text-blue-600 px-2 py-1 rounded">En cours</span>
+                           <span className="text-xs text-gray-400">Il y a 4 min</span>
+                        </div>
+                        <p className="text-sm font-bold truncate">Client {i} → Chauffeur {i}</p>
+                        <p className="text-xs text-gray-500 truncate mt-1">Plateau → Almadies</p>
+                      </div>
+                    ))}
+                    <button className="w-full py-2 text-center text-sm font-bold text-blue-500 hover:bg-blue-50 rounded-lg transition">Voir les 35 autres...</button>
+                  </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                   <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><ShieldAlert className="w-5 h-5 text-yellow-500"/> Geofencing & Surge</h3>
+                   <div className="space-y-4">
+                      <div className="border p-4 rounded-xl bg-gray-50">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="font-bold text-sm">Zone Aéroport</span>
+                          <span className="text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded">Actif</span>
+                        </div>
+                        <p className="text-xs text-gray-500 mb-3">Multiplicateur de prix actuel : <strong className="text-black">x1.5</strong></p>
+                        <input type="range" min="1" max="3" step="0.1" defaultValue="1.5" className="w-full accent-noordrive-green" />
+                      </div>
+                      <button className="w-full border-2 border-dashed border-gray-300 text-gray-500 font-bold py-3 rounded-xl hover:bg-gray-50 transition">+ Créer une zone</button>
+                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {tab === 'marketing' && (
+          <div className="space-y-8">
+            <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-2"><Gift className="w-8 h-8 text-noordrive-green"/> Marketing & Promotions</h2>
+            
+            <div className="grid grid-cols-2 gap-8">
+              {/* Création de Code Promo */}
+              <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
+                <h3 className="text-xl font-bold mb-6 text-gray-800 border-b pb-4">Créer un Code Promo</h3>
+                <form className="space-y-4">
+                   <div className="grid grid-cols-2 gap-4">
+                     <div>
+                       <label className="block text-sm font-bold text-gray-700 mb-1">Code (ex: TABASKI26)</label>
+                       <input type="text" className="w-full border p-3 rounded-xl focus:outline-none focus:border-noordrive-green" placeholder="TABASKI26" />
+                     </div>
+                     <div>
+                       <label className="block text-sm font-bold text-gray-700 mb-1">Type de Réduction</label>
+                       <select className="w-full border p-3 rounded-xl focus:outline-none bg-white">
+                         <option>Montant fixe (FCFA)</option>
+                         <option>Pourcentage (%)</option>
+                       </select>
+                     </div>
+                   </div>
+                   <div className="grid grid-cols-2 gap-4">
+                     <div>
+                       <label className="block text-sm font-bold text-gray-700 mb-1">Valeur</label>
+                       <input type="number" className="w-full border p-3 rounded-xl focus:outline-none focus:border-noordrive-green" placeholder="1000" />
+                     </div>
+                     <div>
+                       <label className="block text-sm font-bold text-gray-700 mb-1">Limite d'utilisation (Nb max)</label>
+                       <input type="number" className="w-full border p-3 rounded-xl focus:outline-none focus:border-noordrive-green" placeholder="100" />
+                     </div>
+                   </div>
+                   <div className="flex items-center gap-2 mt-2">
+                     <input type="checkbox" id="newUsersOnly" className="w-4 h-4 accent-noordrive-green" />
+                     <label htmlFor="newUsersOnly" className="text-sm font-bold text-gray-600 cursor-pointer">Réservé aux nouveaux utilisateurs</label>
+                   </div>
+                   <button type="button" className="w-full bg-noordrive-black text-white font-bold py-3 rounded-xl hover:bg-gray-800 transition mt-4 shadow-lg">Générer le Code</button>
+                </form>
+              </div>
+
+              {/* Notifications Push */}
+              <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
+                <h3 className="text-xl font-bold mb-6 text-gray-800 border-b pb-4">Campagne Push Notification</h3>
+                <form className="space-y-4">
+                   <div>
+                     <label className="block text-sm font-bold text-gray-700 mb-1">Ciblage de l'audience</label>
+                     <select className="w-full border p-3 rounded-xl focus:outline-none bg-white">
+                       <option>Tous les Passagers</option>
+                       <option>Tous les Chauffeurs</option>
+                       <option>Chauffeurs inactifs depuis 3 jours</option>
+                       <option>Passagers sans trajet depuis 1 mois</option>
+                     </select>
+                   </div>
+                   <div>
+                     <label className="block text-sm font-bold text-gray-700 mb-1">Titre de la notification</label>
+                     <input type="text" className="w-full border p-3 rounded-xl focus:outline-none focus:border-noordrive-green" placeholder="🚗 Réduction ce weekend !" />
+                   </div>
+                   <div>
+                     <label className="block text-sm font-bold text-gray-700 mb-1">Message</label>
+                     <textarea className="w-full border p-3 rounded-xl focus:outline-none focus:border-noordrive-green min-h-[100px]" placeholder="Profitez de 1000 FCFA offerts..."></textarea>
+                   </div>
+                   <button type="button" className="w-full bg-blue-500 text-white font-bold py-3 rounded-xl hover:bg-blue-600 transition shadow-lg flex justify-center items-center gap-2">
+                      Envoyer la campagne Push
+                   </button>
+                </form>
+              </div>
+            </div>
+            
+            {/* Liste des codes actifs */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mt-8">
+               <div className="p-4 bg-gray-50 border-b font-bold text-gray-700">Codes Promo Actifs</div>
+               <table className="w-full text-left text-sm">
+                  <thead className="bg-white border-b">
+                     <tr>
+                        <th className="p-4 font-semibold">Code</th>
+                        <th className="p-4 font-semibold">Valeur</th>
+                        <th className="p-4 font-semibold">Utilisations</th>
+                        <th className="p-4 font-semibold">Cible</th>
+                        <th className="p-4 font-semibold text-right">Action</th>
+                     </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                     <tr className="hover:bg-gray-50">
+                        <td className="p-4 font-black text-noordrive-green">BIENVENUE</td>
+                        <td className="p-4 font-bold">1000 FCFA</td>
+                        <td className="p-4">12/100</td>
+                        <td className="p-4"><span className="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded">Nouveaux</span></td>
+                        <td className="p-4 text-right"><button className="text-red-500 font-bold hover:underline">Désactiver</button></td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+          </div>
+        )}
+
+        {tab === 'risk' && (
+          <div className="space-y-6">
+            <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-2"><ShieldAlert className="w-8 h-8 text-noordrive-green"/> Risques, Fraudes & Audit</h2>
+            
+            <div className="grid grid-cols-2 gap-6">
+              {/* Alertes Fraudes */}
+              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                 <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2 flex items-center gap-2">
+                   <Activity className="w-5 h-5 text-red-500" /> Alertes Fraude (Auto-détection)
+                 </h3>
+                 <div className="space-y-3">
+                   <div className="p-3 border rounded-xl bg-red-50 border-red-100">
+                      <div className="flex justify-between">
+                        <span className="font-bold text-sm text-red-700">Auto-Parrainage suspect</span>
+                        <span className="text-xs font-bold text-red-500">Urgent</span>
+                      </div>
+                      <p className="text-xs text-red-600 mt-1">Le chauffeur "Oumar T." a invité 5 passagers utilisant la même adresse IP.</p>
+                      <div className="mt-2 flex gap-2">
+                        <button className="text-xs bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">Bloquer les comptes</button>
+                        <button className="text-xs bg-white text-gray-500 border px-3 py-1 rounded">Ignorer</button>
+                      </div>
+                   </div>
+                   <div className="p-3 border rounded-xl bg-yellow-50 border-yellow-100">
+                      <div className="flex justify-between">
+                        <span className="font-bold text-sm text-yellow-700">Annulations excessives</span>
+                        <span className="text-xs font-bold text-yellow-600">Modéré</span>
+                      </div>
+                      <p className="text-xs text-yellow-700 mt-1">Le chauffeur "Seydou N." a annulé 3 courses après avoir pris le client aujourd'hui.</p>
+                      <div className="mt-2 flex gap-2">
+                        <button className="text-xs bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600">Avertir</button>
+                      </div>
+                   </div>
+                 </div>
+              </div>
+
+              {/* Logs d'Audit Admin */}
+              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                 <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Audit Logs (Historique Backoffice)</h3>
+                 <div className="flex-1 overflow-y-auto space-y-3 pr-2">
+                   {[
+                     { admin: 'SuperAdmin', action: 'A crédité 5000F au chauffeur ID#102', time: 'Il y a 10 min' },
+                     { admin: 'Modérateur', action: 'A banni temporairement le passager ID#45', time: 'Il y a 1h' },
+                     { admin: 'Système', action: 'Désactivation automatique du Surge (Aéroport)', time: 'Il y a 2h' },
+                     { admin: 'SuperAdmin', action: 'Création du code promo TABASKI26', time: 'Hier' },
+                   ].map((log, idx) => (
+                     <div key={idx} className="flex gap-3 text-sm border-b pb-2">
+                       <div className="w-2 h-2 mt-1.5 rounded-full bg-gray-300"></div>
+                       <div>
+                         <p className="font-bold text-gray-700">{log.admin} <span className="font-normal text-gray-500 ml-1">- {log.action}</span></p>
+                         <p className="text-xs text-gray-400">{log.time}</p>
+                       </div>
+                     </div>
+                   ))}
+                 </div>
               </div>
             </div>
           </div>
@@ -514,6 +748,25 @@ export default function AdminHome() {
                           )}
                         </div>
                       )}
+
+                      {/* Nouvelles fonctionnalités CRM */}
+                      <div className="bg-gray-50 p-4 rounded-xl border mt-4">
+                        <h5 className="font-bold text-gray-800 mb-4">Actions Avancées</h5>
+                        <div className="space-y-3">
+                          <button className="w-full flex justify-between items-center bg-white p-3 rounded-lg border hover:bg-gray-50 transition">
+                             <span className="font-bold text-sm text-gray-700">Historique des Trajets</span>
+                             <span className="text-gray-400 text-xs">14 trajets</span>
+                          </button>
+                          <button className="w-full flex justify-between items-center bg-white p-3 rounded-lg border hover:bg-gray-50 transition">
+                             <span className="font-bold text-sm text-gray-700">Avis & Notes reçues</span>
+                             <span className="text-yellow-500 font-bold text-xs">⭐ 4.8</span>
+                          </button>
+                          <button className="w-full flex justify-between items-center bg-orange-50 p-3 rounded-lg border border-orange-200 text-orange-600 hover:bg-orange-100 transition">
+                             <span className="font-bold text-sm">Shadowban Temporaire</span>
+                             <span className="text-xs">24h / 48h</span>
+                          </button>
+                        </div>
+                      </div>
 
                       <div className="pt-4 border-t">
                         <button onClick={handleDeleteUser} className="w-full flex justify-center items-center gap-2 text-red-500 font-bold hover:bg-red-50 py-2 rounded-lg transition">
@@ -780,9 +1033,9 @@ export default function AdminHome() {
         )}
 
         {tab === 'analytics' && (
-          <div className="h-full flex flex-col">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-800">Analyse & Exports Comptables</h2>
+          <div className="h-full flex flex-col space-y-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-2"><BarChart2 className="w-8 h-8 text-noordrive-green" /> Data Intelligence & Export</h2>
               <button onClick={() => {
                 const ws = XLSX.utils.json_to_sheet(transactions.map(t => ({
                   Date: new Date(t.createdAt).toLocaleDateString(),
@@ -795,15 +1048,58 @@ export default function AdminHome() {
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Transactions");
                 XLSX.writeFile(wb, `NoorDrive_Compta_${new Date().toISOString().split('T')[0]}.xlsx`);
-              }} className="bg-noordrive-green text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 hover:brightness-105">
-                <FileSpreadsheet className="w-5 h-5" /> Exporter (Excel)
+              }} className="bg-noordrive-green text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 hover:brightness-105 shadow-lg">
+                <FileSpreadsheet className="w-5 h-5" /> Exporter Data (Excel)
               </button>
             </div>
             
+            {/* Nouveau Dashboard Data Intelligence */}
+            <div className="grid grid-cols-3 gap-6">
+               <div className="col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-[350px]">
+                 <h3 className="font-bold text-gray-800 mb-4 border-b pb-2">Taux de Conversion (Funnel Acquisition)</h3>
+                 <div className="flex h-[250px] items-end justify-around pb-4 pt-8">
+                    <div className="w-24 bg-blue-100 flex flex-col justify-end items-center rounded-t-xl group relative" style={{ height: '100%' }}>
+                      <span className="absolute -top-6 font-bold text-blue-600">100%</span>
+                      <div className="w-full bg-blue-500 rounded-t-xl" style={{ height: '100%' }}></div>
+                      <span className="absolute -bottom-6 text-xs font-bold text-gray-500">Ouverture App</span>
+                    </div>
+                    <div className="w-24 bg-blue-100 flex flex-col justify-end items-center rounded-t-xl relative" style={{ height: '100%' }}>
+                      <span className="absolute -top-6 font-bold text-blue-600">65%</span>
+                      <div className="w-full bg-blue-500 rounded-t-xl" style={{ height: '65%' }}></div>
+                      <span className="absolute -bottom-6 text-xs font-bold text-gray-500">Recherche</span>
+                    </div>
+                    <div className="w-24 bg-blue-100 flex flex-col justify-end items-center rounded-t-xl relative" style={{ height: '100%' }}>
+                      <span className="absolute -top-6 font-bold text-blue-600">42%</span>
+                      <div className="w-full bg-blue-500 rounded-t-xl" style={{ height: '42%' }}></div>
+                      <span className="absolute -bottom-6 text-xs font-bold text-gray-500">Match Chauffeur</span>
+                    </div>
+                    <div className="w-24 bg-blue-100 flex flex-col justify-end items-center rounded-t-xl relative" style={{ height: '100%' }}>
+                      <span className="absolute -top-6 font-bold text-noordrive-green">38%</span>
+                      <div className="w-full bg-noordrive-green rounded-t-xl" style={{ height: '38%' }}></div>
+                      <span className="absolute -bottom-6 text-xs font-bold text-gray-500">Course Terminée</span>
+                    </div>
+                 </div>
+               </div>
+
+               <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-[350px]">
+                 <h3 className="font-bold text-gray-800 mb-4 border-b pb-2">Rétention Cohortes (S+1)</h3>
+                 <div className="space-y-4 mt-8">
+                    <div>
+                      <div className="flex justify-between text-sm mb-1"><span className="font-bold text-gray-600">Passagers (Revenus après 7 jours)</span> <span className="font-bold">45%</span></div>
+                      <div className="w-full bg-gray-100 h-3 rounded-full"><div className="bg-blue-500 h-3 rounded-full" style={{ width: '45%' }}></div></div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-sm mb-1"><span className="font-bold text-gray-600">Chauffeurs (Actifs après 7 jours)</span> <span className="font-bold">82%</span></div>
+                      <div className="w-full bg-gray-100 h-3 rounded-full"><div className="bg-noordrive-green h-3 rounded-full" style={{ width: '82%' }}></div></div>
+                    </div>
+                 </div>
+               </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-[300px]">
-                <h3 className="font-bold text-gray-600 mb-4">Volume des Transactions (Derniers jours)</h3>
-                <ResponsiveContainer width="100%" height="100%">
+                <h3 className="font-bold text-gray-800 mb-4">Volume des Transactions Financières</h3>
+                <ResponsiveContainer width="100%" height="80%">
                   <BarChart data={transactions.slice(0,10)}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="method" />
@@ -814,8 +1110,8 @@ export default function AdminHome() {
                 </ResponsiveContainer>
               </div>
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-[300px]">
-                <h3 className="font-bold text-gray-600 mb-4">Évolution des Micro-Crédits</h3>
-                <ResponsiveContainer width="100%" height="100%">
+                <h3 className="font-bold text-gray-800 mb-4">Évolution des Micro-Crédits</h3>
+                <ResponsiveContainer width="100%" height="80%">
                   <LineChart data={loans.slice(0,10)}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="dureeMois" />
