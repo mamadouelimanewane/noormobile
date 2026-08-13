@@ -113,6 +113,8 @@ app.post('/api/ai/parse-intent', async (req, res) => {
   }
 });
 
+const activeDriverLocations = new Map<string, any>();
+
 // Get Active Drivers for Map
 app.get('/api/drivers/active', async (req, res) => {
   try {
@@ -124,10 +126,13 @@ app.get('/api/drivers/active', async (req, res) => {
       include: { vehicle: true }
     });
     // Transform to match Driver type on frontend
-    const formatted = drivers.map(d => ({
-      ...d,
-      position: d.position ? (d.position as any) : { lat: 14.6928, lng: -17.4467, heading: 0 } // Default to Dakar if null
-    }));
+    const formatted = drivers.map(d => {
+      const memPos = activeDriverLocations.get(d.id);
+      return {
+        ...d,
+        position: memPos || (d.position ? (d.position as any) : { lat: 14.6928, lng: -17.4467, heading: 0 })
+      };
+    });
     res.json(formatted);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -1046,7 +1051,9 @@ io.on('connection', (socket) => {
     });
   });
 
-  socket.on('driver:location', (data: { driverId: string, lat: number, lng: number }) => {
+  socket.on('driver:location', (data: { driverId: string, position: any }) => {
+    // Cache location for /api/drivers/active endpoint
+    activeDriverLocations.set(data.driverId, data.position);
     // Broadcast to passengers looking for cars, or to specific active request room
     io.emit('driver:moved', data);
   });

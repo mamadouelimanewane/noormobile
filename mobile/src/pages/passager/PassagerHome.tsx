@@ -392,8 +392,11 @@ function DeliveryForm({ onCreate }: { onCreate: ReturnType<typeof useStore.getSt
   const allDrivers = useStore((s) => s.drivers);
   const nearbyCars = useMemo(() => {
     if (!pickup) return [];
-    return Object.values(allDrivers).filter(d => d.isOnline).slice(0, 5).map(d => d.position);
-  }, [pickup, allDrivers]);
+    return Object.values(allDrivers)
+      .filter(d => d.isOnline && d.position)
+      .filter(d => distanceKm(d.position!, pickup) <= searchRadius)
+      .map(d => d.position!);
+  }, [pickup, allDrivers, searchRadius]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
