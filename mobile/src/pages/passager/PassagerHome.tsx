@@ -62,9 +62,8 @@ export default function PassagerHome() {
     
     return Object.values(allDrivers)
       .filter(d => d.isOnline && d.position)
-      .filter(d => distanceKm(d.position!, activeRequest.pickup!) <= searchRadius)
       .map(d => d.position!);
-  }, [activeRequest?.pickup, activeRequest?.status, allDrivers, searchRadius]);
+  }, [activeRequest?.pickup, activeRequest?.status, allDrivers]);
 
   if (activeRequest) {
     return (
@@ -396,9 +395,8 @@ function DeliveryForm({ onCreate }: { onCreate: ReturnType<typeof useStore.getSt
     if (!pickup) return [];
     return Object.values(allDrivers)
       .filter(d => d.isOnline && d.position)
-      .filter(d => distanceKm(d.position!, pickup) <= searchRadius)
       .map(d => d.position!);
-  }, [pickup, allDrivers, searchRadius]);
+  }, [pickup, allDrivers]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
