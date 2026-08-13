@@ -19,7 +19,7 @@ import { VILLES_INTERCITY } from '../../types';
 import type { GeoPoint, ServiceType } from '../../types';
 
 export default function PassagerHome() {
-  const [tab, setTab] = useState('demandes');
+  const [tab, setTab] = useState('ride');
   const currentUser = useStore((s) => s.currentUser);
   const requests = useStore((s) => s.requests);
   const createRequest = useStore((s) => s.createRequest);
