@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { Car, Bike, Sparkles, Package, Map, ArrowRight } from 'lucide-react';
 import Layout from '../../components/Layout';
 import { useStore } from '../../store/useStore';
 import PlaceSelect from '../../components/PlaceSelect';
@@ -119,20 +120,20 @@ export default function PassagerHome() {
             className="bg-white rounded-t-3xl md:rounded-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] p-5 md:p-8"
           >
             <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4 md:hidden" />
-            <div className="flex gap-2 mb-8 overflow-x-auto pb-1 no-scrollbar md:justify-center md:gap-4 border-b border-gray-100 md:pb-4">
+            <div className="flex gap-3 mb-6 overflow-x-auto pb-2 no-scrollbar md:justify-center md:gap-4 md:pb-4 border-b border-gray-100">
               {[
-                { key: 'ride', label: 'Voiture' },
-                { key: 'delivery', label: 'Livraison' },
-                { key: 'intercity', label: 'Interurbain' }
+                { key: 'ride', label: 'Course', icon: <Car className="w-4 h-4" /> },
+                { key: 'delivery', label: 'Colis', icon: <Package className="w-4 h-4" /> },
+                { key: 'intercity', label: 'Interurbain', icon: <Map className="w-4 h-4" /> }
               ].map(t => (
                 <button
                   key={t.key}
                   onClick={() => setTab(t.key)}
-                  className={`px-6 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition ${
-                    tab === t.key ? 'bg-noordrive-black text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-bold whitespace-nowrap transition-all duration-300 ${
+                    tab === t.key ? 'bg-black text-white shadow-lg shadow-black/20 scale-105' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                   }`}
                 >
-                  {t.label}
+                  {t.icon} {t.label}
                 </button>
               ))}
             </div>
@@ -154,12 +155,13 @@ function RideForm({ onCreate }: { onCreate: ReturnType<typeof useStore.getState>
   const [dropoff, setDropoff] = useState<GeoPoint | null>(null);
   const [price, setPrice] = useState<number>(0);
   const [isMapFullscreen, setIsMapFullscreen] = useState(false);
+  const [category, setCategory] = useState<'Standard' | 'Confort' | 'Moto'>('Standard');
 
   const allDrivers = useStore((s) => s.drivers);
   const nearbyCars = useMemo(() => {
     if (!pickup) return [];
-    return Object.values(allDrivers).filter(d => d.isOnline).slice(0, 5).map(d => d.position);
-  }, [pickup, allDrivers]);
+    return Object.values(allDrivers).filter(d => d.isOnline && (category === 'Moto' ? d.vehicle?.category === 'Moto' : true)).slice(0, 5).map(d => d.position);
+  }, [pickup, allDrivers, category]);
 
   const [suggestion, setSuggestion] = useState<number | null>(null);
 
@@ -174,7 +176,7 @@ function RideForm({ onCreate }: { onCreate: ReturnType<typeof useStore.getState>
   useEffect(() => {
     if (pickup && dropoff) {
       import('../../lib/api').then(({ api }) => {
-        api.post('/pricing/estimate', { distanceKm: distanceKm(pickup, dropoff), type: 'ride', category: 'Standard' })
+        api.post('/pricing/estimate', { distanceKm: distanceKm(pickup, dropoff), type: 'ride', category })
           .then(res => {
             if (res.data.ok) {
               setSuggestion(res.data.estimatedPrice);
@@ -185,12 +187,12 @@ function RideForm({ onCreate }: { onCreate: ReturnType<typeof useStore.getState>
     } else {
       setSuggestion(null);
     }
-  }, [pickup, dropoff]);
+  }, [pickup, dropoff, category]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!pickup || !dropoff || price <= 0) return;
-    onCreate({ type: 'ride' as ServiceType, pickup, dropoff, proposedPrice: price });
+    onCreate({ type: 'ride' as ServiceType, pickup, dropoff, proposedPrice: price, category });
   }
 
   function handleMapClick(point: GeoPoint) {
@@ -207,56 +209,107 @@ function RideForm({ onCreate }: { onCreate: ReturnType<typeof useStore.getState>
 
   return (
     <div className="grid md:grid-cols-2 gap-6">
-      <form onSubmit={handleSubmit} className={`bg-white border rounded-xl p-5 space-y-4 ${isMapFullscreen ? 'hidden md:block' : ''}`}>
-        <h2 className="font-bold text-lg mb-1">Demander une course</h2>
-        <PlaceSelect label="Départ" value={pickup?.label ?? ''} onChange={setPickup} />
-        <PlaceSelect label="Arrivée" value={dropoff?.label ?? ''} onChange={setDropoff} />
+      <form onSubmit={handleSubmit} className={`bg-white border border-gray-100 rounded-3xl p-6 space-y-6 shadow-sm ${isMapFullscreen ? 'hidden md:block' : ''}`}>
+        <div>
+          <h2 className="font-black text-2xl mb-1 text-gray-800">Où allez-vous ?</h2>
+          <p className="text-sm text-gray-500 font-medium">Réservez votre trajet en un instant.</p>
+        </div>
+        
+        <div className="space-y-3 relative">
+          <div className="absolute left-4 top-5 bottom-5 w-0.5 bg-gray-200 z-0"></div>
+          <div className="relative z-10 flex items-center gap-3">
+             <div className="w-3 h-3 rounded-full bg-black border-2 border-white shadow-sm shrink-0"></div>
+             <div className="flex-1">
+               <PlaceSelect label="Point de départ" value={pickup?.label ?? ''} onChange={setPickup} />
+             </div>
+          </div>
+          <div className="relative z-10 flex items-center gap-3">
+             <div className="w-3 h-3 rounded-full bg-noordrive-green border-2 border-white shadow-sm shrink-0"></div>
+             <div className="flex-1">
+               <PlaceSelect label="Destination" value={dropoff?.label ?? ''} onChange={setDropoff} />
+             </div>
+          </div>
+        </div>
         
         <button 
           type="button" 
           onClick={() => setIsMapFullscreen(true)}
-          className="w-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2"
+          className="w-full bg-gray-50 hover:bg-gray-100 text-gray-700 transition py-3 rounded-2xl text-sm font-bold flex items-center justify-center gap-2"
         >
-          📍 Choisir sur la carte plein écran
+          📍 Choisir précisément sur la carte
         </button>
 
-        {suggestion && (
-          <p className="text-xs text-gray-500">Prix suggéré pour ce trajet : {formatFcfa(suggestion)}</p>
-        )}
-        <div>
-          <label className="text-xs font-medium text-gray-500">Votre prix proposé (FCFA)</label>
-          <input
-            type="number"
-            min={100}
-            step={50}
-            value={price || ''}
-            onChange={(e) => setPrice(Number(e.target.value))}
-            className="w-full border rounded-lg px-3 py-2 mt-1"
-            placeholder={suggestion ? String(suggestion) : '1000'}
-          />
+        {/* Sélection du Véhicule */}
+        <div className="pt-2">
+          <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 block">Choisissez votre catégorie</label>
+          <div className="grid grid-cols-3 gap-3">
+            <button 
+              type="button" 
+              onClick={() => setCategory('Standard')}
+              className={`p-3 rounded-2xl flex flex-col items-center justify-center gap-2 border-2 transition ${category === 'Standard' ? 'border-noordrive-black bg-gray-50' : 'border-gray-100 hover:border-gray-200'}`}
+            >
+              <Car className={`w-8 h-8 ${category === 'Standard' ? 'text-black' : 'text-gray-400'}`} />
+              <span className={`text-xs font-bold ${category === 'Standard' ? 'text-black' : 'text-gray-500'}`}>Standard</span>
+            </button>
+            <button 
+              type="button" 
+              onClick={() => setCategory('Confort')}
+              className={`p-3 rounded-2xl flex flex-col items-center justify-center gap-2 border-2 transition ${category === 'Confort' ? 'border-noordrive-green bg-green-50/30' : 'border-gray-100 hover:border-gray-200'}`}
+            >
+              <Sparkles className={`w-8 h-8 ${category === 'Confort' ? 'text-noordrive-green' : 'text-gray-400'}`} />
+              <span className={`text-xs font-bold ${category === 'Confort' ? 'text-noordrive-green' : 'text-gray-500'}`}>Confort</span>
+            </button>
+            <button 
+              type="button" 
+              onClick={() => setCategory('Moto')}
+              className={`p-3 rounded-2xl flex flex-col items-center justify-center gap-2 border-2 transition ${category === 'Moto' ? 'border-orange-500 bg-orange-50/30' : 'border-gray-100 hover:border-gray-200'}`}
+            >
+              <Bike className={`w-8 h-8 ${category === 'Moto' ? 'text-orange-500' : 'text-gray-400'}`} />
+              <span className={`text-xs font-bold ${category === 'Moto' ? 'text-orange-500' : 'text-gray-500'}`}>Moto</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="pt-2 border-t border-gray-100">
+          <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 flex justify-between">
+            <span>Votre proposition tarifaire</span>
+            {suggestion && <span className="text-noordrive-green">Suggestion : {formatFcfa(suggestion)}</span>}
+          </label>
+          <div className="relative">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">FCFA</span>
+            <input
+              type="number"
+              min={100}
+              step={50}
+              value={price || ''}
+              onChange={(e) => setPrice(Number(e.target.value))}
+              className="w-full bg-gray-50 border border-gray-200 rounded-2xl pl-16 pr-4 py-4 font-black text-xl text-gray-800 focus:outline-none focus:ring-2 focus:ring-noordrive-green focus:border-transparent transition"
+              placeholder={suggestion ? String(suggestion) : '1000'}
+            />
+          </div>
         </div>
         <button
           disabled={!pickup || !dropoff || price <= 0}
-          className="w-full bg-noordrive-green disabled:opacity-40 hover:bg-noordrive-green-dark transition text-white py-3 rounded-full font-semibold"
+          className="w-full bg-noordrive-black disabled:bg-gray-200 disabled:text-gray-400 hover:bg-gray-800 transition text-white py-4 rounded-2xl font-black text-lg shadow-xl shadow-black/10 active:scale-95"
         >
-          Envoyer ma demande
+          Commander maintenant
         </button>
       </form>
       
-      <div className={`${isMapFullscreen ? 'fixed inset-0 z-50 bg-white' : 'h-72 md:h-[600px] rounded-2xl overflow-hidden shadow-sm border border-gray-100'} w-full flex flex-col`}>
+      <div className={`${isMapFullscreen ? 'fixed inset-0 z-50 bg-white' : 'h-72 md:h-[600px] rounded-3xl overflow-hidden shadow-sm border border-gray-100'} w-full flex flex-col`}>
         {isMapFullscreen && (
           <div className="absolute top-4 left-4 z-[60] flex flex-col gap-2">
-            <button onClick={() => setIsMapFullscreen(false)} className="bg-white px-4 py-2 rounded-full shadow-lg font-bold text-black border">← Retour au formulaire</button>
+            <button onClick={() => setIsMapFullscreen(false)} className="bg-white px-5 py-3 rounded-full shadow-xl font-black text-black border flex items-center gap-2">← Retour au formulaire</button>
           </div>
         )}
         
         {isMapFullscreen && (
-          <div className="absolute top-4 right-4 left-48 z-[60] bg-white rounded-xl shadow-lg border p-3 flex flex-col gap-1 text-sm font-medium">
-            <div className={`flex items-center gap-2 ${!pickup || (pickup && dropoff) ? 'text-noordrive-green font-bold' : 'text-gray-400'}`}>
-              <div className="w-2 h-2 rounded-full bg-current" /> Départ: {pickup ? pickup.label : 'Touchez la carte'}
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[60] bg-black/90 backdrop-blur-md rounded-2xl shadow-2xl p-4 flex flex-col gap-2 text-sm font-medium w-11/12 max-w-sm">
+            <div className={`flex items-center gap-3 ${!pickup || (pickup && dropoff) ? 'text-noordrive-green font-bold' : 'text-gray-400'}`}>
+              <div className="w-3 h-3 rounded-full bg-current" /> Départ: {pickup ? pickup.label : 'Touchez la carte...'}
             </div>
-            <div className={`flex items-center gap-2 ${pickup && !dropoff ? 'text-noordrive-black font-bold' : 'text-gray-400'}`}>
-              <div className="w-2 h-2 rounded-full bg-current" /> Arrivée: {dropoff ? dropoff.label : 'Touchez la carte'}
+            <div className={`flex items-center gap-3 ${pickup && !dropoff ? 'text-white font-bold' : 'text-gray-400'}`}>
+              <div className="w-3 h-3 rounded-full bg-current" /> Arrivée: {dropoff ? dropoff.label : 'Touchez la carte...'}
             </div>
           </div>
         )}
@@ -277,6 +330,7 @@ function DeliveryForm({ onCreate }: { onCreate: ReturnType<typeof useStore.getSt
   const [taille, setTaille] = useState<'petit' | 'moyen' | 'grand'>('petit');
   const [destNom, setDestNom] = useState('');
   const [destPhone, setDestPhone] = useState('');
+  const [isMapFullscreen, setIsMapFullscreen] = useState(false);
 
   const allDrivers = useStore((s) => s.drivers);
   const nearbyCars = useMemo(() => {
@@ -297,51 +351,129 @@ function DeliveryForm({ onCreate }: { onCreate: ReturnType<typeof useStore.getSt
   }
 
   function handleMapClick(point: GeoPoint) {
-    if (!pickup) setPickup(point);
-    else setDropoff(point);
+    if (!pickup || (pickup && dropoff && !isMapFullscreen)) {
+      setPickup(point);
+      setDropoff(null);
+    } else {
+      setDropoff(point);
+      if (isMapFullscreen) {
+        setTimeout(() => setIsMapFullscreen(false), 500);
+      }
+    }
   }
 
   return (
     <div className="grid md:grid-cols-2 gap-6">
-      <form onSubmit={handleSubmit} className="bg-white border rounded-xl p-5 space-y-4">
-        <h2 className="font-bold text-lg mb-1">Envoyer un colis</h2>
-        <PlaceSelect label="Point de collecte" value={pickup?.label ?? ''} onChange={setPickup} />
-        <PlaceSelect label="Point de livraison" value={dropoff?.label ?? ''} onChange={setDropoff} />
+      <form onSubmit={handleSubmit} className={`bg-white border border-gray-100 rounded-3xl p-6 space-y-6 shadow-sm ${isMapFullscreen ? 'hidden md:block' : ''}`}>
         <div>
-          <label className="text-xs font-medium text-gray-500">Description du colis</label>
-          <input value={description} onChange={(e) => setDescription(e.target.value)} className="w-full border rounded-lg px-3 py-2 mt-1" placeholder="Documents, vêtements..." />
+          <h2 className="font-black text-2xl mb-1 text-gray-800 flex items-center gap-2"><Package className="text-orange-500" /> Envoyer un colis</h2>
+          <p className="text-sm text-gray-500 font-medium">Livraison rapide et sécurisée.</p>
         </div>
-        <div>
-          <label className="text-xs font-medium text-gray-500">Taille</label>
-          <select value={taille} onChange={(e) => setTaille(e.target.value as typeof taille)} className="w-full border rounded-lg px-3 py-2 mt-1">
-            <option value="petit">Petit</option>
-            <option value="moyen">Moyen</option>
-            <option value="grand">Grand</option>
-          </select>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="text-xs font-medium text-gray-500">Nom du destinataire</label>
-            <input value={destNom} onChange={(e) => setDestNom(e.target.value)} className="w-full border rounded-lg px-3 py-2 mt-1" />
+        
+        <div className="space-y-3 relative">
+          <div className="absolute left-4 top-5 bottom-5 w-0.5 bg-gray-200 z-0"></div>
+          <div className="relative z-10 flex items-center gap-3">
+             <div className="w-3 h-3 rounded-full bg-black border-2 border-white shadow-sm shrink-0"></div>
+             <div className="flex-1">
+               <PlaceSelect label="Point de collecte" value={pickup?.label ?? ''} onChange={setPickup} />
+             </div>
           </div>
-          <div>
-            <label className="text-xs font-medium text-gray-500">Téléphone destinataire</label>
-            <input value={destPhone} onChange={(e) => setDestPhone(e.target.value)} className="w-full border rounded-lg px-3 py-2 mt-1" />
+          <div className="relative z-10 flex items-center gap-3">
+             <div className="w-3 h-3 rounded-full bg-orange-500 border-2 border-white shadow-sm shrink-0"></div>
+             <div className="flex-1">
+               <PlaceSelect label="Point de livraison" value={dropoff?.label ?? ''} onChange={setDropoff} />
+             </div>
           </div>
         </div>
-        <div>
-          <label className="text-xs font-medium text-gray-500">Votre prix proposé (FCFA)</label>
-          <input type="number" min={100} step={50} value={price || ''} onChange={(e) => setPrice(Number(e.target.value))} className="w-full border rounded-lg px-3 py-2 mt-1" placeholder="1500" />
+        
+        <button 
+          type="button" 
+          onClick={() => setIsMapFullscreen(true)}
+          className="w-full bg-gray-50 hover:bg-gray-100 text-gray-700 transition py-3 rounded-2xl text-sm font-bold flex items-center justify-center gap-2"
+        >
+          📍 Choisir sur la carte
+        </button>
+
+        <div className="space-y-4 pt-2">
+          <div>
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">Que voulez-vous envoyer ?</label>
+            <input value={description} onChange={(e) => setDescription(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-orange-500 outline-none" placeholder="Ex: Clés, Documents, Gâteau..." />
+          </div>
+          
+          <div>
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">Taille du colis</label>
+            <div className="grid grid-cols-3 gap-2">
+              {(['petit', 'moyen', 'grand'] as const).map(t => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setTaille(t)}
+                  className={`py-2 px-1 text-sm font-bold rounded-xl border-2 capitalize transition ${taille === t ? 'border-orange-500 bg-orange-50 text-orange-600' : 'border-gray-100 text-gray-500'}`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">Nom du contact</label>
+              <input value={destNom} onChange={(e) => setDestNom(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-orange-500 outline-none" placeholder="Bintou" />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">Téléphone</label>
+              <input value={destPhone} onChange={(e) => setDestPhone(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-orange-500 outline-none" placeholder="77 123 45 67" />
+            </div>
+          </div>
+        </div>
+
+        <div className="pt-2 border-t border-gray-100">
+          <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">
+            Votre proposition tarifaire
+          </label>
+          <div className="relative">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">FCFA</span>
+            <input
+              type="number"
+              min={100}
+              step={50}
+              value={price || ''}
+              onChange={(e) => setPrice(Number(e.target.value))}
+              className="w-full bg-gray-50 border border-gray-200 rounded-2xl pl-16 pr-4 py-4 font-black text-xl text-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
+              placeholder="1500"
+            />
+          </div>
         </div>
         <button
-          disabled={!pickup || !dropoff || price <= 0}
-          className="w-full bg-noordrive-green disabled:opacity-40 hover:bg-noordrive-green-dark transition text-white py-3 rounded-full font-semibold"
+          disabled={!pickup || !dropoff || price <= 0 || !description}
+          className="w-full bg-orange-500 disabled:bg-gray-200 disabled:text-gray-400 hover:bg-orange-600 transition text-white py-4 rounded-2xl font-black text-lg shadow-xl shadow-orange-500/20 active:scale-95"
         >
-          Envoyer ma demande
+          Commander la livraison
         </button>
       </form>
-      <div className="h-72 md:h-[600px] w-full rounded-2xl overflow-hidden shadow-sm border border-gray-100">
-        <MapView pickup={pickup ?? undefined} dropoff={dropoff ?? undefined} onMapClick={handleMapClick} nearbyCars={nearbyCars} />
+      
+      <div className={`${isMapFullscreen ? 'fixed inset-0 z-50 bg-white' : 'h-72 md:h-[600px] rounded-3xl overflow-hidden shadow-sm border border-gray-100'} w-full flex flex-col`}>
+        {isMapFullscreen && (
+          <div className="absolute top-4 left-4 z-[60] flex flex-col gap-2">
+            <button onClick={() => setIsMapFullscreen(false)} className="bg-white px-5 py-3 rounded-full shadow-xl font-black text-black border flex items-center gap-2">← Retour au formulaire</button>
+          </div>
+        )}
+        
+        {isMapFullscreen && (
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[60] bg-black/90 backdrop-blur-md rounded-2xl shadow-2xl p-4 flex flex-col gap-2 text-sm font-medium w-11/12 max-w-sm">
+            <div className={`flex items-center gap-3 ${!pickup || (pickup && dropoff) ? 'text-orange-500 font-bold' : 'text-gray-400'}`}>
+              <div className="w-3 h-3 rounded-full bg-current" /> Collecte: {pickup ? pickup.label : 'Touchez la carte...'}
+            </div>
+            <div className={`flex items-center gap-3 ${pickup && !dropoff ? 'text-white font-bold' : 'text-gray-400'}`}>
+              <div className="w-3 h-3 rounded-full bg-current" /> Livraison: {dropoff ? dropoff.label : 'Touchez la carte...'}
+            </div>
+          </div>
+        )}
+
+        <div className="flex-1 w-full relative">
+          <MapView pickup={pickup ?? undefined} dropoff={dropoff ?? undefined} onMapClick={handleMapClick} nearbyCars={nearbyCars} />
+        </div>
       </div>
     </div>
   );
@@ -371,44 +503,58 @@ function IntercityForm({ onCreate }: { onCreate: ReturnType<typeof useStore.getS
 
   return (
     <div className="grid md:grid-cols-2 gap-6">
-      <form onSubmit={handleSubmit} className="bg-white border rounded-xl p-5 space-y-4">
-        <h2 className="font-bold text-lg mb-1">Trajet ville à ville</h2>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="text-xs font-medium text-gray-500">Ville de départ</label>
-            <select value={villeDepart} onChange={(e) => setVilleDepart(e.target.value)} className="w-full border rounded-lg px-3 py-2 mt-1">
-              {VILLES_INTERCITY.map((v) => <option key={v} value={v}>{v}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="text-xs font-medium text-gray-500">Ville d'arrivée</label>
-            <select value={villeArrivee} onChange={(e) => setVilleArrivee(e.target.value)} className="w-full border rounded-lg px-3 py-2 mt-1">
-              {VILLES_INTERCITY.map((v) => <option key={v} value={v}>{v}</option>)}
-            </select>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="text-xs font-medium text-gray-500">Date de départ</label>
-            <input type="date" value={dateDepart} onChange={(e) => setDateDepart(e.target.value)} className="w-full border rounded-lg px-3 py-2 mt-1" />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-gray-500">Places</label>
-            <input type="number" min={1} max={4} value={places} onChange={(e) => setPlaces(Number(e.target.value))} className="w-full border rounded-lg px-3 py-2 mt-1" />
-          </div>
-        </div>
+      <form onSubmit={handleSubmit} className="bg-white border border-gray-100 rounded-3xl p-6 space-y-6 shadow-sm">
         <div>
-          <label className="text-xs font-medium text-gray-500">Votre prix proposé (FCFA)</label>
-          <input type="number" min={500} step={100} value={price || ''} onChange={(e) => setPrice(Number(e.target.value))} className="w-full border rounded-lg px-3 py-2 mt-1" placeholder="8000" />
+          <h2 className="font-black text-2xl mb-1 text-gray-800 flex items-center gap-2"><Map className="text-blue-500" /> Covoiturage</h2>
+          <p className="text-sm text-gray-500 font-medium">Voyagez entre les villes du pays.</p>
+        </div>
+        
+        <div className="flex items-center gap-2 bg-gray-50 p-3 rounded-2xl">
+          <div className="flex-1">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 block">Départ</label>
+            <select value={villeDepart} onChange={(e) => setVilleDepart(e.target.value)} className="w-full bg-transparent font-bold text-black outline-none text-lg">
+              {VILLES_INTERCITY.map((v) => <option key={v} value={v}>{v}</option>)}
+            </select>
+          </div>
+          <ArrowRight className="text-gray-300 w-5 h-5 mx-2" />
+          <div className="flex-1">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 block">Arrivée</label>
+            <select value={villeArrivee} onChange={(e) => setVilleArrivee(e.target.value)} className="w-full bg-transparent font-bold text-black outline-none text-lg text-right">
+              {VILLES_INTERCITY.map((v) => <option key={v} value={v}>{v}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">Date de départ</label>
+            <input type="date" value={dateDepart} onChange={(e) => setDateDepart(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">Places</label>
+            <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-xl px-4 py-2">
+              <button type="button" onClick={() => setPlaces(Math.max(1, places - 1))} className="text-2xl font-bold text-blue-500 px-2">-</button>
+              <span className="font-bold text-lg">{places}</span>
+              <button type="button" onClick={() => setPlaces(Math.min(4, places + 1))} className="text-2xl font-bold text-blue-500 px-2">+</button>
+            </div>
+          </div>
+        </div>
+
+        <div className="pt-2 border-t border-gray-100">
+          <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">Prix proposé par place</label>
+          <div className="relative">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">FCFA</span>
+            <input type="number" min={500} step={100} value={price || ''} onChange={(e) => setPrice(Number(e.target.value))} className="w-full bg-gray-50 border border-gray-200 rounded-2xl pl-16 pr-4 py-4 font-black text-xl text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="5000" />
+          </div>
         </div>
         <button
           disabled={villeDepart === villeArrivee || price <= 0 || !dateDepart}
-          className="w-full bg-noordrive-green disabled:opacity-40 hover:bg-noordrive-green-dark transition text-white py-3 rounded-full font-semibold"
+          className="w-full bg-blue-500 disabled:bg-gray-200 disabled:text-gray-400 hover:bg-blue-600 transition text-white py-4 rounded-2xl font-black text-lg shadow-xl shadow-blue-500/20 active:scale-95"
         >
-          Envoyer ma demande
+          Réserver le trajet
         </button>
       </form>
-      <div className="h-72 md:h-[600px] w-full rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+      <div className="h-72 md:h-[600px] w-full rounded-3xl overflow-hidden shadow-sm border border-gray-100">
         <MapView pickup={pickup} dropoff={dropoff} center={pickup} />
       </div>
     </div>
