@@ -44,6 +44,9 @@ export default function PassagerHome() {
     if (data.category) setAiCategory(data.category);
   };
 
+  const allDrivers = useStore((s) => s.drivers);
+  const searchRadius = useStore((s) => (s.settings as any).searchRadius || 5);
+
   const myActives = requests.filter(
     (r) =>
       r.passengerId === currentUser?.id &&
@@ -53,13 +56,23 @@ export default function PassagerHome() {
 
   const activeRequest = myActives[0];
 
+  const nearbyCarsActive = useMemo(() => {
+    if (!activeRequest || !activeRequest.pickup) return [];
+    if (activeRequest.status !== 'recherche' && activeRequest.status !== 'negociation') return [];
+    
+    return Object.values(allDrivers)
+      .filter(d => d.isOnline && d.position)
+      .filter(d => distanceKm(d.position!, activeRequest.pickup!) <= searchRadius)
+      .map(d => d.position!);
+  }, [activeRequest?.pickup, activeRequest?.status, allDrivers, searchRadius]);
+
   if (activeRequest) {
     return (
       <Layout activeTab={tab} onTabChange={setTab}>
         {activeRequest.status === 'recherche' || activeRequest.status === 'negociation' ? (
           <div className="absolute inset-0 z-0 flex flex-col justify-end pointer-events-none">
             <div className="absolute inset-0 z-0 pointer-events-auto">
-              <MapView pickup={activeRequest.pickup ?? undefined} dropoff={activeRequest.dropoff ?? undefined} driverPosition={activeRequest.driverPosition} />
+              <MapView pickup={activeRequest.pickup ?? undefined} dropoff={activeRequest.dropoff ?? undefined} driverPosition={activeRequest.driverPosition} nearbyCars={nearbyCarsActive} />
             </div>
             <motion.div 
               initial={{ y: '100%' }} animate={{ y: 0 }} 
