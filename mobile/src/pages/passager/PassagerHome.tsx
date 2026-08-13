@@ -332,7 +332,7 @@ function RideForm({ onCreate, initialDropoff, initialCategory }: { onCreate: Ret
         </button>
       </form>
       
-      <div className={`${isMapFullscreen ? 'fixed inset-0 z-50 bg-white' : 'hidden md:flex md:h-[600px] rounded-3xl overflow-hidden shadow-sm border border-gray-100'} w-full flex-col`}>
+      <div className={`${isMapFullscreen ? 'fixed inset-0 z-50 bg-white flex' : 'hidden md:flex md:h-[600px] rounded-3xl overflow-hidden shadow-sm border border-gray-100'} w-full flex-col`}>
         {isMapFullscreen && (
           <div className="absolute top-4 left-4 z-[60] flex flex-col gap-2">
             <button onClick={() => setIsMapFullscreen(false)} className="bg-white px-5 py-3 rounded-full shadow-xl font-black text-black border flex items-center gap-2">← Retour au formulaire</button>
@@ -351,13 +351,15 @@ function RideForm({ onCreate, initialDropoff, initialCategory }: { onCreate: Ret
         )}
 
         <div className="flex-1 w-full relative">
-          {isMapFullscreen ? (
-            <MapView key="fullscreen-map" pickup={pickup ?? undefined} dropoff={dropoff ?? undefined} onMapClick={handleMapClick} nearbyCars={nearbyCars} />
-          ) : (
-            <div className="hidden md:block w-full h-full">
-              <MapView key="inline-map" pickup={pickup ?? undefined} dropoff={dropoff ?? undefined} onMapClick={handleMapClick} nearbyCars={nearbyCars} />
-            </div>
-          )}
+          <div className="absolute inset-0">
+            {isMapFullscreen ? (
+              <MapView key="fullscreen-map" pickup={pickup ?? undefined} dropoff={dropoff ?? undefined} onMapClick={handleMapClick} nearbyCars={nearbyCars} />
+            ) : (
+              <div className="hidden md:block w-full h-full">
+                <MapView key="inline-map" pickup={pickup ?? undefined} dropoff={dropoff ?? undefined} onMapClick={handleMapClick} nearbyCars={nearbyCars} />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -495,7 +497,7 @@ function DeliveryForm({ onCreate }: { onCreate: ReturnType<typeof useStore.getSt
         </button>
       </form>
       
-      <div className={`${isMapFullscreen ? 'fixed inset-0 z-50 bg-white' : 'hidden md:flex md:h-[600px] rounded-3xl overflow-hidden shadow-sm border border-gray-100'} w-full flex-col`}>
+      <div className={`${isMapFullscreen ? 'fixed inset-0 z-50 bg-white flex' : 'hidden md:flex md:h-[600px] rounded-3xl overflow-hidden shadow-sm border border-gray-100'} w-full flex-col`}>
         {isMapFullscreen && (
           <div className="absolute top-4 left-4 z-[60] flex flex-col gap-2">
             <button onClick={() => setIsMapFullscreen(false)} className="bg-white px-5 py-3 rounded-full shadow-xl font-black text-black border flex items-center gap-2">← Retour au formulaire</button>
@@ -514,13 +516,15 @@ function DeliveryForm({ onCreate }: { onCreate: ReturnType<typeof useStore.getSt
         )}
 
         <div className="flex-1 w-full relative">
-          {isMapFullscreen ? (
-            <MapView key="fullscreen-map" pickup={pickup ?? undefined} dropoff={dropoff ?? undefined} onMapClick={handleMapClick} nearbyCars={nearbyCars} />
-          ) : (
-            <div className="hidden md:block w-full h-full">
-              <MapView key="inline-map" pickup={pickup ?? undefined} dropoff={dropoff ?? undefined} onMapClick={handleMapClick} nearbyCars={nearbyCars} />
-            </div>
-          )}
+          <div className="absolute inset-0">
+            {isMapFullscreen ? (
+              <MapView key="fullscreen-map" pickup={pickup ?? undefined} dropoff={dropoff ?? undefined} onMapClick={handleMapClick} nearbyCars={nearbyCars} />
+            ) : (
+              <div className="hidden md:block w-full h-full">
+                <MapView key="inline-map" pickup={pickup ?? undefined} dropoff={dropoff ?? undefined} onMapClick={handleMapClick} nearbyCars={nearbyCars} />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
