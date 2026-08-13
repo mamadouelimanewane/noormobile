@@ -53,6 +53,10 @@ model User {
   // Intercity Carpool Relations
   carpoolTrips        CarpoolTrip[]
   carpoolBookings     CarpoolBooking[]
+
+  // Fleet Relation
+  fleetId             String?
+  fleet               FleetCompany? @relation(fields: [fleetId], references: [id])
 }
 
 model Vehicle {
@@ -163,6 +167,16 @@ model PlatformSettings {
   perKmRate            Float  @default(200)
   withdrawalFee        Float  @default(0.01)
   maxLoanAmount        Float  @default(100000)
+  
+  // API Keys (Encrypted in a real app, stored here for the mockup)
+  waveApiKey           String?
+  orangeMoneyApiKey    String?
+  stripeSecretKey      String?
+  googleMapsApiKey     String?
+
+  // App settings
+  searchRadiusKm       Int    @default(5)
+  forceAppUpdate       Boolean @default(false)
 }
 
 model DriverDocument {
@@ -265,4 +279,69 @@ model TontineMember {
   joinedAt        DateTime @default(now())
 
   @@unique([userId, groupId])
+}
+
+// --- MARKETING & LOYALTY ---
+model PromoCode {
+  id            String   @id @default(cuid())
+  code          String   @unique
+  discountPct   Float    // Percentage (e.g. 10 for 10%)
+  maxUsage      Int      @default(100)
+  currentUsage  Int      @default(0)
+  expiresAt     DateTime
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+}
+
+model DriverQuest {
+  id            String   @id @default(cuid())
+  title         String
+  description   String
+  targetRides   Int
+  bonusAmount   Float
+  startDate     DateTime
+  endDate       DateTime
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+}
+
+// --- RISK & SECURITY ---
+model AuditLog {
+  id            String   @id @default(cuid())
+  adminId       String
+  action        String
+  targetId      String?
+  details       String?
+  createdAt     DateTime @default(now())
+}
+
+model FraudAlert {
+  id            String   @id @default(cuid())
+  userId        String
+  reason        String
+  severity      String   @default("LOW") // LOW, MEDIUM, HIGH
+  status        String   @default("OPEN") // OPEN, RESOLVED
+  createdAt     DateTime @default(now())
+}
+
+model EmergencyAlert {
+  id            String   @id @default(cuid())
+  userId        String
+  userRole      String   // passenger or driver
+  latitude      Float
+  longitude     Float
+  status        String   @default("ACTIVE") // ACTIVE, RESOLVED
+  createdAt     DateTime @default(now())
+}
+
+// --- FLEET (B2B) ---
+model FleetCompany {
+  id            String   @id @default(cuid())
+  name          String
+  contactName   String
+  contactPhone  String
+  address       String?
+  createdAt     DateTime @default(now())
+
+  drivers       User[]
 }

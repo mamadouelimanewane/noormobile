@@ -539,11 +539,12 @@ app.get('/api/admin/settings', async (req, res) => {
 
 app.post('/api/admin/settings', async (req, res) => {
   try {
-    const { commissionRate, referralBonusSponsor, referralBonusReferee, baseFare, perKmRate, withdrawalFee, maxLoanAmount } = req.body;
+    const { commissionRate, referralBonusSponsor, referralBonusReferee, baseFare, perKmRate, withdrawalFee, maxLoanAmount, waveApiKey, orangeMoneyApiKey, stripeSecretKey, googleMapsApiKey, searchRadiusKm, forceAppUpdate } = req.body;
+    const updateData = { commissionRate, referralBonusSponsor, referralBonusReferee, baseFare, perKmRate, withdrawalFee, maxLoanAmount, waveApiKey, orangeMoneyApiKey, stripeSecretKey, googleMapsApiKey, searchRadiusKm, forceAppUpdate };
     const settings = await prisma.platformSettings.upsert({
       where: { id: 'default' },
-      update: { commissionRate, referralBonusSponsor, referralBonusReferee, baseFare, perKmRate, withdrawalFee, maxLoanAmount },
-      create: { id: 'default', commissionRate, referralBonusSponsor, referralBonusReferee, baseFare, perKmRate, withdrawalFee, maxLoanAmount }
+      update: updateData,
+      create: { id: 'default', ...updateData }
     });
     res.json(settings);
   } catch (err: any) {
@@ -1292,6 +1293,62 @@ app.put('/api/support/tickets/:id/status', async (req, res) => {
   }
 });
 // --------------------
+
+// Phase 4 - New Endpoints (Marketing, Risk, Fleet)
+app.get('/api/admin/promocodes', async (req, res) => {
+  try {
+    const codes = await prisma.promoCode.findMany({ orderBy: { createdAt: 'desc' } });
+    res.json(codes);
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/admin/promocodes', async (req, res) => {
+  try {
+    const { code, discountPct, maxUsage, expiresAt } = req.body;
+    const newCode = await prisma.promoCode.create({
+      data: { code, discountPct, maxUsage, expiresAt: new Date(expiresAt) }
+    });
+    res.json(newCode);
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+app.get('/api/admin/quests', async (req, res) => {
+  try {
+    const quests = await prisma.driverQuest.findMany({ orderBy: { createdAt: 'desc' } });
+    res.json(quests);
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+app.get('/api/admin/fraud', async (req, res) => {
+  try {
+    const alerts = await prisma.fraudAlert.findMany({ orderBy: { createdAt: 'desc' } });
+    res.json(alerts);
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+app.get('/api/admin/audit', async (req, res) => {
+  try {
+    const logs = await prisma.auditLog.findMany({ orderBy: { createdAt: 'desc' }, take: 100 });
+    res.json(logs);
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+app.get('/api/admin/emergency', async (req, res) => {
+  try {
+    const alerts = await prisma.emergencyAlert.findMany({ orderBy: { createdAt: 'desc' } });
+    res.json(alerts);
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+app.get('/api/admin/fleets', async (req, res) => {
+  try {
+    const fleets = await prisma.fleetCompany.findMany({ 
+      include: { _count: { select: { drivers: true } } },
+      orderBy: { createdAt: 'desc' } 
+    });
+    res.json(fleets);
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
 
 const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, () => {
