@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
-import { Settings, Users, LogOut, CheckCircle2, LayoutDashboard, Activity, TrendingUp, Percent, Wallet, Download, Upload, Edit3, Trash2, Eye, X, Landmark, CheckCircle, XCircle, FileSpreadsheet, BarChart2, Users2, HelpCircle, Map, Gift, ShieldAlert, Headset, Building, AlertTriangle, Trophy } from 'lucide-react';
+import { Settings, Users, LogOut, CheckCircle2, LayoutDashboard, Activity, TrendingUp, Percent, Wallet, Download, Upload, Edit3, Trash2, Eye, X, Landmark, CheckCircle, XCircle, FileSpreadsheet, BarChart2, Users2, HelpCircle, Map, Gift, ShieldAlert, Headset, Building, AlertTriangle, Trophy, Banknote, CreditCard, Lock, Sliders, Database, Key } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatFcfa } from '../lib/geo';
 import * as XLSX from 'xlsx';
@@ -282,6 +282,9 @@ export default function AdminHome() {
           <button onClick={() => setTab('finances')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'finances' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
             <Wallet className="w-5 h-5" /> Finances & Compta
           </button>
+          <button onClick={() => setTab('treasury')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'treasury' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
+            <Banknote className="w-5 h-5" /> Trésorerie Centrale
+          </button>
           <button onClick={() => setTab('marketing')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'marketing' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
             <Gift className="w-5 h-5" /> Marketing & Promo
           </button>
@@ -317,7 +320,10 @@ export default function AdminHome() {
               <Percent className="w-5 h-5" /> Moteur de Taxes
             </button>
             <button onClick={() => setTab('settings')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'settings' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
-              <Settings className="w-5 h-5" /> Paramètres
+              <Sliders className="w-5 h-5" /> Configuration Système
+            </button>
+            <button onClick={() => setTab('api_keys')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${tab === 'api_keys' ? 'bg-white/10 text-noordrive-green' : 'text-gray-400 hover:bg-white/5'}`}>
+              <Lock className="w-5 h-5" /> Clés API & Sécurité
             </button>
           </div>
         </nav>
@@ -1017,54 +1023,102 @@ export default function AdminHome() {
           </div>
         )}
 
+        {tab === 'treasury' && (
+          <div className="space-y-6">
+            <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-2"><Banknote className="w-8 h-8 text-noordrive-green" /> Trésorerie Centrale (Wallet)</h2>
+            <div className="grid grid-cols-3 gap-6">
+               <div className="col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                  <h3 className="font-bold text-xl mb-6">Demandes de Retrait (Payouts)</h3>
+                  <table className="w-full text-left text-sm">
+                     <thead className="bg-gray-50 border-b">
+                        <tr>
+                           <th className="p-4 font-semibold">Bénéficiaire</th>
+                           <th className="p-4 font-semibold">Méthode</th>
+                           <th className="p-4 font-semibold">Montant</th>
+                           <th className="p-4 font-semibold text-right">Action</th>
+                        </tr>
+                     </thead>
+                     <tbody className="divide-y">
+                        <tr className="hover:bg-gray-50">
+                           <td className="p-4"><p className="font-bold text-gray-800">Moussa Diop (Chauffeur)</p><p className="text-xs text-gray-500">ID: 8842</p></td>
+                           <td className="p-4"><span className="bg-blue-100 text-blue-800 font-bold px-2 py-1 rounded">Wave</span> 77 123 45 67</td>
+                           <td className="p-4 font-black text-gray-800">25 000 F</td>
+                           <td className="p-4 text-right flex justify-end gap-2">
+                             <button className="bg-green-100 text-green-700 px-3 py-1 rounded font-bold hover:bg-green-200 transition">Approuver</button>
+                             <button className="bg-red-100 text-red-700 px-3 py-1 rounded font-bold hover:bg-red-200 transition">Rejeter</button>
+                           </td>
+                        </tr>
+                        <tr className="hover:bg-gray-50">
+                           <td className="p-4"><p className="font-bold text-gray-800">Awa Ndour (Client)</p><p className="text-xs text-gray-500">Remboursement</p></td>
+                           <td className="p-4"><span className="bg-orange-100 text-orange-800 font-bold px-2 py-1 rounded">Orange Money</span> 78 987 65 43</td>
+                           <td className="p-4 font-black text-gray-800">5 000 F</td>
+                           <td className="p-4 text-right flex justify-end gap-2">
+                             <button className="bg-green-100 text-green-700 px-3 py-1 rounded font-bold hover:bg-green-200 transition">Approuver</button>
+                             <button className="bg-red-100 text-red-700 px-3 py-1 rounded font-bold hover:bg-red-200 transition">Rejeter</button>
+                           </td>
+                        </tr>
+                     </tbody>
+                  </table>
+               </div>
+               
+               <div className="space-y-6">
+                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                     <h3 className="font-bold text-lg mb-4 text-gray-800">Recharge Manuelle</h3>
+                     <input type="text" placeholder="ID Utilisateur ou Téléphone" className="w-full border p-2 rounded mb-3 bg-gray-50 focus:bg-white outline-none" />
+                     <input type="number" placeholder="Montant (FCFA)" className="w-full border p-2 rounded mb-3 bg-gray-50 focus:bg-white outline-none" />
+                     <button className="w-full bg-noordrive-green text-white font-bold py-3 rounded-xl hover:brightness-105 shadow transition">Créditer le Wallet</button>
+                  </div>
+                  
+                  <div className="bg-gray-800 text-white p-6 rounded-2xl shadow-sm">
+                     <h3 className="font-bold text-lg mb-2 text-gray-300">Fonds Séquestrés (Escrow)</h3>
+                     <p className="text-3xl font-black mb-1">142 500 F</p>
+                     <p className="text-xs text-gray-400">Bloqués pour les 38 trajets actuellement en cours.</p>
+                  </div>
+               </div>
+            </div>
+          </div>
+        )}
+
         {tab === 'settings' && (
-          <div className="max-w-4xl">
-            <h2 className="text-3xl font-bold mb-8 text-gray-800">Paramètres de la Plateforme</h2>
+          <div className="max-w-4xl space-y-6">
+            <h2 className="text-3xl font-bold mb-4 text-gray-800 flex items-center gap-2"><Sliders className="w-8 h-8 text-noordrive-green" /> Configuration Système</h2>
             
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 space-y-8">
-              
               <div>
-                <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Système de Parrainage</h3>
+                <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Commissions & Tarification (God Mode)</h3>
                 <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-600 mb-2">Bonus Parrain (FCFA)</label>
-                    <input type="number" value={sponsorBonus} onChange={(e) => setSponsorBonus(Number(e.target.value))} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-noordrive-green font-bold" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-600 mb-2">Bonus Filleul (FCFA)</label>
-                    <input type="number" value={refereeBonus} onChange={(e) => setRefereeBonus(Number(e.target.value))} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-noordrive-green font-bold" />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Commissions & Tarification</h3>
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-600 mb-2">Taux de Commission (ex: 0.12 pour 12%)</label>
+                    <label className="block text-sm font-semibold text-gray-600 mb-2">Taux de Commission Plateforme</label>
                     <input type="number" step="0.01" value={commissionRate} onChange={(e) => setCommissionRate(Number(e.target.value))} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-noordrive-green font-bold" />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-600 mb-2">Frais de retrait Wallet (ex: 0.01 pour 1%)</label>
+                    <label className="block text-sm font-semibold text-gray-600 mb-2">Frais de retrait Wallet</label>
                     <input type="number" step="0.01" value={withdrawalFee} onChange={(e) => setWithdrawalFee(Number(e.target.value))} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-noordrive-green font-bold" />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-600 mb-2">Prix de base (FCFA)</label>
+                    <label className="block text-sm font-semibold text-gray-600 mb-2">Prix de base (Démarrage)</label>
                     <input type="number" value={baseFare} onChange={(e) => setBaseFare(Number(e.target.value))} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-noordrive-green font-bold" />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-600 mb-2">Prix au Km (FCFA)</label>
+                    <label className="block text-sm font-semibold text-gray-600 mb-2">Prix par Kilomètre (FCFA)</label>
                     <input type="number" value={perKmRate} onChange={(e) => setPerKmRate(Number(e.target.value))} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-noordrive-green font-bold" />
                   </div>
                 </div>
               </div>
 
               <div>
-                <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Micro-crédits</h3>
+                <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Paramètres de l'Application Client/Chauffeur</h3>
                 <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-600 mb-2">Plafond Maximum (FCFA)</label>
-                    <input type="number" value={maxLoanAmount} onChange={(e) => setMaxLoanAmount(Number(e.target.value))} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-noordrive-green font-bold" />
+                    <label className="block text-sm font-semibold text-gray-600 mb-2">Rayon de recherche chauffeur (Km)</label>
+                    <input type="number" defaultValue={5} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-noordrive-green font-bold" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-600 mb-2">Forcer Mise à Jour de l'App</label>
+                    <select className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-noordrive-green font-bold bg-white">
+                      <option>Non</option>
+                      <option>Oui, bloquer l'accès aux anciennes versions</option>
+                    </select>
                   </div>
                 </div>
               </div>
@@ -1072,10 +1126,57 @@ export default function AdminHome() {
               <div className="pt-4 flex items-center justify-end gap-4">
                 {saved && <span className="text-noordrive-green font-bold flex items-center gap-2"><CheckCircle2 className="w-5 h-5"/> Enregistré !</span>}
                 <button onClick={handleSaveSettings} className="bg-noordrive-green text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:brightness-105 transition">
-                  Sauvegarder les modifications
+                  Appliquer les modifications (Live)
                 </button>
               </div>
+            </div>
+          </div>
+        )}
 
+        {tab === 'api_keys' && (
+          <div className="max-w-4xl space-y-6">
+            <h2 className="text-3xl font-bold mb-4 text-gray-800 flex items-center gap-2"><Lock className="w-8 h-8 text-noordrive-green" /> Coffre-fort des Clés API</h2>
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+               <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-8">
+                 <p className="text-sm font-bold text-yellow-800">Attention : La modification de ces clés impactera instantanément la production. Seuls les SuperAdmins ont accès à cet écran.</p>
+               </div>
+
+               <div className="space-y-8">
+                 <div>
+                   <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><CreditCard className="w-5 h-5 text-gray-400"/> Passerelles de Paiement</h3>
+                   <div className="space-y-4">
+                     <div>
+                       <label className="block text-sm font-semibold text-gray-600 mb-1">Wave API Key</label>
+                       <div className="flex gap-2">
+                         <input type="password" defaultValue="wave_live_sk_89f1a2..." className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-2 focus:outline-none focus:border-noordrive-green" />
+                         <button className="bg-gray-100 p-2 rounded-xl border hover:bg-gray-200 transition"><Eye className="w-5 h-5 text-gray-500"/></button>
+                       </div>
+                     </div>
+                     <div>
+                       <label className="block text-sm font-semibold text-gray-600 mb-1">Orange Money API Secret</label>
+                       <div className="flex gap-2">
+                         <input type="password" defaultValue="om_live_sk_45a90x..." className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-2 focus:outline-none focus:border-noordrive-green" />
+                         <button className="bg-gray-100 p-2 rounded-xl border hover:bg-gray-200 transition"><Eye className="w-5 h-5 text-gray-500"/></button>
+                       </div>
+                     </div>
+                   </div>
+                 </div>
+
+                 <div>
+                   <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Map className="w-5 h-5 text-gray-400"/> Cartographie & Géolocalisation</h3>
+                   <div>
+                     <label className="block text-sm font-semibold text-gray-600 mb-1">Google Maps API Key</label>
+                     <div className="flex gap-2">
+                       <input type="password" defaultValue="AIzaSyB..." className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-2 focus:outline-none focus:border-noordrive-green" />
+                       <button className="bg-gray-100 p-2 rounded-xl border hover:bg-gray-200 transition"><Eye className="w-5 h-5 text-gray-500"/></button>
+                     </div>
+                   </div>
+                 </div>
+
+                 <div className="pt-6 border-t">
+                   <button className="w-full bg-noordrive-black text-white font-bold py-3 rounded-xl hover:bg-gray-800 transition shadow-lg">Sauvegarder les clés API</button>
+                 </div>
+               </div>
             </div>
           </div>
         )}
