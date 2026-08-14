@@ -16,8 +16,9 @@ const dotIcon = (color: string, label?: string) =>
 const carIcon = (_color: string, heading?: number) =>
   L.divIcon({
     className: 'noordrive-marker',
-    html: `<div style="font-size:22px;transform:translate(-50%,-50%) rotate(${heading || 0}deg)">🚗</div>`,
-    iconSize: [0, 0],
+    html: `<div style="font-size:24px;line-height:24px;text-align:center;transform:rotate(${heading || 0}deg)">🚗</div>`,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
   });
 
 interface MapViewProps {
