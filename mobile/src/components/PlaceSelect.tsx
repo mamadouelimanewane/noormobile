@@ -5,9 +5,10 @@ interface PlaceSelectProps {
   label: string;
   value: string;
   onChange: (point: GeoPoint) => void;
+  theme?: 'pickup' | 'dropoff';
 }
 
-export default function PlaceSelect({ label, value, onChange }: PlaceSelectProps) {
+export default function PlaceSelect({ label, value, onChange, theme }: PlaceSelectProps) {
   const [query, setQuery] = useState(value);
   const [results, setResults] = useState<any[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -52,9 +53,28 @@ export default function PlaceSelect({ label, value, onChange }: PlaceSelectProps
     return () => clearTimeout(delayDebounceFn);
   }, [query, value]);
 
+  const getThemeClasses = () => {
+    if (theme === 'pickup') {
+      return 'bg-gray-100 hover:bg-gray-200 focus-within:bg-white border-2 border-transparent focus-within:border-black focus-within:ring-4 focus-within:ring-gray-200 text-black';
+    }
+    if (theme === 'dropoff') {
+      return 'bg-green-50 hover:bg-green-100 focus-within:bg-white border-2 border-transparent focus-within:border-noordrive-green focus-within:ring-4 focus-within:ring-green-100 text-noordrive-green';
+    }
+    return 'bg-gray-50 hover:bg-gray-100 focus-within:bg-white border-2 border-transparent focus-within:border-black focus-within:ring-4 focus-within:ring-gray-100 text-gray-800';
+  };
+
+  const getIcon = () => {
+    if (theme === 'pickup') return '📍'; // black marker
+    if (theme === 'dropoff') return '📍'; // green marker
+    return '🔍';
+  };
+
   return (
     <div ref={wrapperRef} className="relative w-full">
-      <div className="relative flex items-center bg-gray-50/50 hover:bg-gray-50 focus-within:bg-white border-2 border-transparent focus-within:border-black rounded-2xl transition-all duration-300 overflow-hidden shadow-sm">
+      <div className={`relative flex items-center rounded-2xl transition-all duration-300 overflow-hidden shadow-sm ${getThemeClasses()}`}>
+        <div className="pl-4 pr-1 text-lg">
+          {getIcon()}
+        </div>
         <input
           type="text"
           value={query}
@@ -64,12 +84,13 @@ export default function PlaceSelect({ label, value, onChange }: PlaceSelectProps
           }}
           onFocus={() => setIsOpen(true)}
           placeholder={label}
-          className="w-full bg-transparent px-4 py-3.5 text-sm font-bold text-gray-900 placeholder-gray-400 focus:outline-none"
+          className="w-full bg-transparent px-3 py-4 text-[15px] font-bold placeholder-gray-400 focus:outline-none"
         />
         {query && (
           <button 
+            type="button"
             onClick={() => { setQuery(''); onChange(null as any); }}
-            className="p-3 text-gray-400 hover:text-gray-600 transition"
+            className="p-3 text-gray-400 hover:text-gray-600 transition hover:rotate-90 duration-300"
           >
             ✕
           </button>

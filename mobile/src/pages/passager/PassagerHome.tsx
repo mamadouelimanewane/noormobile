@@ -268,13 +268,13 @@ function RideForm({ onCreate, initialDropoff, initialCategory }: { onCreate: Ret
           <div className="relative z-10 flex items-center gap-3">
              <div className="w-3 h-3 rounded-full bg-black border-2 border-white shadow-sm shrink-0"></div>
              <div className="flex-1">
-               <PlaceSelect label="Point de départ" value={pickup?.label ?? ''} onChange={setPickup} />
+               <PlaceSelect label="Point de départ" value={pickup?.label ?? ''} onChange={setPickup} theme="pickup" />
              </div>
           </div>
           <div className="relative z-10 flex items-center gap-3">
              <div className="w-3 h-3 rounded-full bg-noordrive-green border-2 border-white shadow-sm shrink-0"></div>
              <div className="flex-1">
-               <PlaceSelect label="Destination" value={dropoff?.label ?? ''} onChange={setDropoff} />
+               <PlaceSelect label="Destination" value={dropoff?.label ?? ''} onChange={setDropoff} theme="dropoff" />
              </div>
           </div>
         </div>
@@ -435,13 +435,13 @@ function DeliveryForm({ onCreate }: { onCreate: ReturnType<typeof useStore.getSt
           <div className="relative z-10 flex items-center gap-3">
              <div className="w-3 h-3 rounded-full bg-black border-2 border-white shadow-sm shrink-0"></div>
              <div className="flex-1">
-               <PlaceSelect label="Point de collecte" value={pickup?.label ?? ''} onChange={setPickup} />
+               <PlaceSelect label="Point de collecte" value={pickup?.label ?? ''} onChange={setPickup} theme="pickup" />
              </div>
           </div>
           <div className="relative z-10 flex items-center gap-3">
              <div className="w-3 h-3 rounded-full bg-orange-500 border-2 border-white shadow-sm shrink-0"></div>
              <div className="flex-1">
-               <PlaceSelect label="Point de livraison" value={dropoff?.label ?? ''} onChange={setDropoff} />
+               <PlaceSelect label="Point de livraison" value={dropoff?.label ?? ''} onChange={setDropoff} theme="dropoff" />
              </div>
           </div>
         </div>
