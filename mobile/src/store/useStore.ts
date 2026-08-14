@@ -65,7 +65,6 @@ interface StoreState {
   updateSettings: (settings: Partial<PlatformSettings>) => void;
   setupSocket: () => void;
   fetchActiveDrivers: () => Promise<void>;
-  setCurrentUser: (user: any) => void;
 }
 
 export const useStore = create<StoreState>()(
@@ -196,7 +195,6 @@ export const useStore = create<StoreState>()(
         });
       },
 
-      setCurrentUser: (user) => set({ currentUser: user }),
 
       register: (name, phone, role, vehicle) => {
         const state = get();

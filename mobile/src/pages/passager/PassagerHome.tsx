@@ -45,7 +45,6 @@ export default function PassagerHome() {
   };
 
   const allDrivers = useStore((s) => s.drivers);
-  const searchRadius = useStore((s) => (s.settings as any).searchRadius || 50);
 
   const myActives = requests.filter(
     (r) =>
@@ -389,7 +388,6 @@ function DeliveryForm({ onCreate }: { onCreate: ReturnType<typeof useStore.getSt
   const [isMapFullscreen, setIsMapFullscreen] = useState(false);
 
   const allDrivers = useStore((s) => s.drivers);
-  const searchRadius = useStore((s) => (s.settings as any).searchRadius || 50);
 
   const nearbyCars = useMemo(() => {
     if (!pickup) return [];
