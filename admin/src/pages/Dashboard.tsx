@@ -640,6 +640,7 @@ export default function AdminHome() {
                       <th className="p-4 font-semibold text-gray-600">Nom</th>
                       <th className="p-4 font-semibold text-gray-600">Rôle</th>
                       <th className="p-4 font-semibold text-gray-600">Portefeuille</th>
+                      <th className="p-4 font-semibold text-gray-600">Connexion</th>
                       <th className="p-4 font-semibold text-gray-600">Statut (Chauffeur)</th>
                       <th className="p-4 font-semibold text-gray-600">Action</th>
                     </tr>
@@ -652,6 +653,13 @@ export default function AdminHome() {
                           <span className={`px-2 py-1 rounded text-xs font-bold ${u.role === 'chauffeur' ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-700'}`}>{u.role}</span>
                         </td>
                         <td className="p-4 font-bold">{formatFcfa(u.walletBalance)}</td>
+                        <td className="p-4">
+                          {u.isOnline ? (
+                            <span className="flex items-center gap-1.5 text-green-600 font-bold text-xs"><span className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_#22c55e]"></span> En ligne</span>
+                          ) : (
+                            <span className="flex items-center gap-1.5 text-gray-400 font-bold text-xs"><span className="w-2 h-2 rounded-full bg-gray-300"></span> Hors ligne</span>
+                          )}
+                        </td>
                         <td className="p-4">
                           {u.role === 'chauffeur' ? (
                             <span className={`px-2 py-1 rounded text-xs font-bold ${u.accountStatus === 'APPROVED' ? 'bg-green-100 text-green-700' : u.accountStatus === 'REJECTED' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>

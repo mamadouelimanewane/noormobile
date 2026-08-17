@@ -46,6 +46,8 @@ io.on('connection', (socket) => {
   socket.on('join', (data) => {
     // data can be { userId, role: 'driver' | 'passenger' }
     if (data && data.userId) {
+      socket.data = socket.data || {};
+      socket.data.userId = data.userId;
       socket.join(data.userId);
       console.log(`User ${data.userId} joined room`);
     }
@@ -1037,6 +1039,8 @@ io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
   socket.on('driver:online', async (data: { driverId: string }) => {
+    socket.data = socket.data || {};
+    socket.data.userId = data.driverId;
     socket.join('drivers');
     await prisma.user.update({
       where: { id: data.driverId },
@@ -1370,8 +1374,18 @@ io.on('connection', (socket) => {
     io.emit('ride:updated', formattedReq);
   });
 
-  socket.on('disconnect', () => {
+  socket.on('disconnect', async () => {
     console.log('User disconnected:', socket.id);
+    if (socket.data && socket.data.userId) {
+      try {
+        await prisma.user.update({
+          where: { id: socket.data.userId },
+          data: { isOnline: false }
+        });
+      } catch (err) {
+        console.error('Failed to set user offline:', err);
+      }
+    }
   });
 });
 
